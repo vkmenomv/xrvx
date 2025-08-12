@@ -1,0 +1,823 @@
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local env = getgenv()
+
+local snakeModule = {
+    name = "snake",
+    gui = nil,
+    isOpen = false,
+    api = env.API,
+    snakeEnabled = false,
+    isMinimized = false,
+    isDraggingSlider = false,
+    bodyParts = {
+        "Head", "UpperTorso", "LowerTorso",
+        "LeftUpperArm", "LeftLowerArm", "LeftHand",
+        "RightUpperArm", "RightLowerArm", "RightHand",
+        "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+        "RightUpperLeg", "RightLowerLeg", "RightFoot",
+        "HumanoidRootPart" 
+    },
+    snakeOrder = {
+        "Head", "UpperTorso", "LowerTorso",
+        "LeftUpperArm", "LeftLowerArm", "LeftHand",
+        "RightUpperArm", "RightLowerArm", "RightHand",
+        "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+        "RightUpperLeg", "RightLowerLeg", "RightFoot"
+    },
+    snakeDistance = 1.0,
+    snakeSmoothing = 0.1,
+    MIN_DISTANCE = 0.2,
+    MAX_DISTANCE = 5.0,
+    swingEnabled = true,
+    ghostEnabled = false,
+    originalCharacter = nil,
+    ghostClone = nil,
+    originalCFrame = nil,
+    originalAnimateScript = nil,
+    updateConnection = nil,
+    renderStepConnection = nil,
+    previousPositions = {},
+    targetPositions = {},
+    lastUpdateTime = 0,
+    preservedGuis = {},
+    pathHistory = {},
+    maxPathLength = 3000,
+    createElement = function(self, className, parent, properties)
+        local element = Instance.new(className, parent)
+        for property, value in pairs(properties) do
+            element[property] = value
+        end
+        return element
+    end,
+    createGUI = function(self)
+        if self.gui then
+            self.gui:Destroy()
+        end
+
+        local gui = self:createElement(
+            "ScreenGui",
+            game:GetService("CoreGui"),
+            {
+                Name = "SnakeGui",
+                ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+                ResetOnSpawn = false
+            }
+        )
+
+        local main = self:createElement(
+            "Frame",
+            gui,
+            {
+                Size = UDim2.new(0, 280, 0, 180),
+                Position = UDim2.new(0.5, -140, 0.5, -90),
+                BackgroundColor3 = Color3.fromRGB(15, 15, 20),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", main, {CornerRadius = UDim.new(0, 12)})
+
+        local stroke = self:createElement(
+            "UIStroke",
+            main,
+            {
+                Color = Color3.fromRGB(100, 150, 255),
+                Thickness = 2,
+                Transparency = 0.3
+            }
+        )
+
+        local titleBar = self:createElement(
+            "Frame",
+            main,
+            {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = Color3.fromRGB(20, 20, 30),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", titleBar, {CornerRadius = UDim.new(0, 12)})
+
+        local title = self:createElement(
+            "TextLabel",
+            titleBar,
+            {
+                Size = UDim2.new(1, -80, 1, 0),
+                Position = UDim2.new(0, 15, 0, 0),
+                BackgroundTransparency = 1,
+                Text = "SNAKE",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextXAlignment = Enum.TextXAlignment.Left
+            }
+        )
+
+        local minimizeButton = self:createElement(
+            "TextButton",
+            titleBar,
+            {
+                Size = UDim2.new(0, 30, 0, 30),
+                Position = UDim2.new(1, -70, 0, 5),
+                BackgroundColor3 = Color3.fromRGB(100, 150, 255),
+                Text = "âˆ’",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", minimizeButton, {CornerRadius = UDim.new(0, 6)})
+
+        local closeButton = self:createElement(
+            "TextButton",
+            titleBar,
+            {
+                Size = UDim2.new(0, 30, 0, 30),
+                Position = UDim2.new(1, -35, 0, 5),
+                BackgroundColor3 = Color3.fromRGB(255, 100, 120),
+                Text = "Ã—",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", closeButton, {CornerRadius = UDim.new(0, 6)})
+
+        local toggle = self:createElement(
+            "TextButton",
+            main,
+            {
+                Size = UDim2.new(1, -20, 0, 35),
+                Position = UDim2.new(0, 10, 0, 50),
+                BackgroundColor3 = Color3.fromRGB(80, 100, 200),
+                Text = "OFF",
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                Font = Enum.Font.GothamBold,
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", toggle, {CornerRadius = UDim.new(0, 6)})
+
+        local distanceSlider = self:createElement(
+            "Frame",
+            main,
+            {
+                Size = UDim2.new(1, -20, 0, 25),
+                Position = UDim2.new(0, 10, 0, 95),
+                BackgroundColor3 = Color3.fromRGB(40, 40, 50),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", distanceSlider, {CornerRadius = UDim.new(0, 4)})
+
+        local distanceTrack = self:createElement(
+            "Frame",
+            distanceSlider,
+            {
+                Size = UDim2.new(1, -20, 0, 6),
+                Position = UDim2.new(0, 10, 0.5, -3),
+                BackgroundColor3 = Color3.fromRGB(60, 60, 70),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", distanceTrack, {CornerRadius = UDim.new(0, 3)})
+
+        local distanceFill = self:createElement(
+            "Frame",
+            distanceTrack,
+            {
+                Size = UDim2.new(0.2, 0, 1, 0),
+                BackgroundColor3 = Color3.fromRGB(100, 150, 255),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", distanceFill, {CornerRadius = UDim.new(0, 3)})
+
+        local swingButton = self:createElement(
+            "TextButton",
+            main,
+            {
+                Size = UDim2.new(1, -20, 0, 30),
+                Position = UDim2.new(0, 10, 0, 130),
+                BackgroundColor3 = Color3.fromRGB(30, 60, 100),
+                Text = "SWING: ON",
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextSize = 14,
+                Font = Enum.Font.GothamBold,
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", swingButton, {CornerRadius = UDim.new(0, 6)})
+
+        self.gui = gui
+        self.main = main
+        self.toggle = toggle
+        self.distanceSlider = distanceSlider
+        self.distanceTrack = distanceTrack
+        self.distanceFill = distanceFill
+        self.swingButton = swingButton
+        self.titleBar = titleBar
+        self.closeButton = closeButton
+        self.minimizeButton = minimizeButton
+
+        self:setupEvents()
+        self.api:addToActive("snake_gui", gui)
+    end,
+    setupEvents = function(self)
+        self.toggle.MouseButton1Click:Connect(function()
+            self:toggleSnake()
+        end)
+
+        self.toggle.MouseEnter:Connect(function()
+            TweenService:Create(self.toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(100, 120, 255)}):Play()
+        end)
+
+        self.toggle.MouseLeave:Connect(function()
+            local color = self.snakeEnabled and Color3.fromRGB(80, 200, 120) or Color3.fromRGB(80, 100, 200)
+            TweenService:Create(self.toggle, TweenInfo.new(0.3), {BackgroundColor3 = color}):Play()
+        end)
+
+        self.swingButton.MouseButton1Click:Connect(function()
+            self.swingEnabled = not self.swingEnabled
+            self:updateSwingButton()
+        end)
+
+        self.swingButton.MouseEnter:Connect(function()
+            TweenService:Create(self.swingButton, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(50, 80, 120)}):Play()
+        end)
+
+        self.swingButton.MouseLeave:Connect(function()
+            local color = self.swingEnabled and Color3.fromRGB(30, 60, 100) or Color3.fromRGB(60, 60, 60)
+            TweenService:Create(self.swingButton, TweenInfo.new(0.3), {BackgroundColor3 = color}):Play()
+        end)
+
+        self.closeButton.MouseButton1Click:Connect(function()
+            self:closeGUI()
+        end)
+
+        self.minimizeButton.MouseButton1Click:Connect(function()
+            self:minimizeToggle()
+        end)
+
+        self.closeButton.MouseEnter:Connect(function()
+            TweenService:Create(self.closeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 130, 150)}):Play()
+        end)
+
+        self.closeButton.MouseLeave:Connect(function()
+            TweenService:Create(self.closeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 100, 120)}):Play()
+        end)
+
+        self.minimizeButton.MouseEnter:Connect(function()
+            TweenService:Create(self.minimizeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(130, 170, 255)}):Play()
+        end)
+
+        self.minimizeButton.MouseLeave:Connect(function()
+            TweenService:Create(self.minimizeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 150, 255)}):Play()
+        end)
+
+        self.distanceSlider.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                self.isDraggingSlider = true
+                local percentage = math.clamp(
+                    (input.Position.X - self.distanceTrack.AbsolutePosition.X) / self.distanceTrack.AbsoluteSize.X,
+                    0,
+                    1
+                )
+                self:updateDistanceSlider(percentage)
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if self.isDraggingSlider and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local percentage = math.clamp(
+                    (input.Position.X - self.distanceTrack.AbsolutePosition.X) / self.distanceTrack.AbsoluteSize.X,
+                    0,
+                    1
+                )
+                self:updateDistanceSlider(percentage)
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                self.isDraggingSlider = false
+            end
+        end)
+
+        self:makeDraggable(self.main, self.titleBar)
+    end,
+    makeDraggable = function(self, frame, dragHandle)
+        local dragging = false
+        local dragStart = nil
+        local startPos = nil
+
+        dragHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 and not self.isDraggingSlider then
+                dragging = true
+                dragStart = input.Position
+                startPos = frame.Position
+            end
+        end)
+
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement and not self.isDraggingSlider then
+                local delta = input.Position - dragStart
+                frame.Position = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + delta.Y
+                )
+            end
+        end)
+
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+    end,
+    updateDistanceSlider = function(self, percentage)
+        percentage = math.clamp(percentage, 0, 1)
+        self.snakeDistance = self.MIN_DISTANCE + percentage * (self.MAX_DISTANCE - self.MIN_DISTANCE)
+        self.distanceFill.Size = UDim2.new(percentage, 0, 1, 0)
+    end,
+    updateSwingButton = function(self)
+        self.swingButton.Text = self.swingEnabled and "SWING: ON" or "SWING: OFF"
+        self.swingButton.BackgroundColor3 = self.swingEnabled and Color3.fromRGB(30, 60, 100) or Color3.fromRGB(60, 60, 60)
+    end,
+    preserveGuis = function(self)
+        local playerGui = LocalPlayer:FindFirstChildWhichIsA("PlayerGui")
+        if playerGui then
+            for _, gui in ipairs(playerGui:GetChildren()) do
+                if gui:IsA("ScreenGui") and gui.Name ~= "SnakeReanimationGui" and gui.ResetOnSpawn then
+                    table.insert(self.preservedGuis, gui)
+                    gui.ResetOnSpawn = false
+                end
+            end
+        end
+    end,
+    restoreGuis = function(self)
+        for _, gui in ipairs(self.preservedGuis) do
+            if gui and gui.Parent then
+                gui.ResetOnSpawn = true
+            end
+        end
+        table.clear(self.preservedGuis)
+    end,
+    updateSnakeParts = function(self, dt)
+        if not self.ghostEnabled or not self.originalCharacter or not self.originalCharacter.Parent or not self.ghostClone or not self.ghostClone.Parent then
+            if self.updateConnection then
+                self.updateConnection:Disconnect()
+                self.updateConnection = nil
+            end
+            if self.renderStepConnection then
+                self.renderStepConnection:Disconnect()
+                self.renderStepConnection = nil
+            end
+            return
+        end
+
+        local currentTime = tick()
+        local actualDt = currentTime - self.lastUpdateTime
+        self.lastUpdateTime = currentTime
+
+        local rootPart = self.ghostClone:FindFirstChild("HumanoidRootPart")
+        if not rootPart then return end
+
+        if not self.targetPositions then self.targetPositions = {} end
+        if not self.previousPositions then self.previousPositions = {} end
+
+        local activeSnakeParts = self.snakeOrder
+
+        if #activeSnakeParts == 0 then return end
+
+        local isMoving = rootPart.AssemblyLinearVelocity.Magnitude > 0.1
+
+        if not self.pathHistory then self.pathHistory = {} end
+        table.insert(self.pathHistory, 1, {pos = rootPart.Position, rot = rootPart.CFrame - rootPart.Position})
+        if #self.pathHistory > self.maxPathLength then
+            table.remove(self.pathHistory)
+        end
+
+        if self.swingEnabled then
+            local firstPartName = activeSnakeParts[1]
+            local firstPart = self.originalCharacter:FindFirstChild(firstPartName)
+
+            if firstPart then
+                if not self.targetPositions[firstPartName] then self.targetPositions[firstPartName] = firstPart.CFrame end
+                if not self.previousPositions[firstPartName] then self.previousPositions[firstPartName] = firstPart.CFrame end
+
+                if isMoving then
+                    local targetPosition = rootPart.Position
+                    local targetRotation = rootPart.CFrame - rootPart.Position
+                    local targetCFrame = CFrame.new(targetPosition) * targetRotation
+                    self.targetPositions[firstPartName] = targetCFrame
+                end
+
+                local smoothCFrame = self.previousPositions[firstPartName]:Lerp(self.targetPositions[firstPartName], self.snakeSmoothing)
+                firstPart.CFrame = smoothCFrame
+                firstPart.AssemblyLinearVelocity = Vector3.zero
+                firstPart.AssemblyAngularVelocity = Vector3.zero
+                self.previousPositions[firstPartName] = smoothCFrame
+
+                for i = 2, #activeSnakeParts do
+                    local partName = activeSnakeParts[i]
+                    local currentPart = self.originalCharacter:FindFirstChild(partName)
+                    local previousPartName = activeSnakeParts[i-1]
+                    local previousPart = self.originalCharacter:FindFirstChild(previousPartName)
+
+                    if currentPart and previousPart then
+                        if not self.targetPositions[partName] then self.targetPositions[partName] = currentPart.CFrame end
+                        if not self.previousPositions[partName] then self.previousPositions[partName] = currentPart.CFrame end
+
+                        if isMoving then
+                            local prevPartPos = previousPart.Position
+                            local prevPartRot = previousPart.CFrame - previousPart.Position
+                            local directionVector
+
+                            if i == 2 then
+                                directionVector = (prevPartPos - rootPart.Position).Unit
+                            else
+                                local beforePreviousPart = self.originalCharacter:FindFirstChild(activeSnakeParts[i-2])
+                                if beforePreviousPart then
+                                    directionVector = (prevPartPos - beforePreviousPart.Position).Unit
+                                else
+                                    directionVector = prevPartRot.LookVector
+                                end
+                            end
+
+                            if directionVector.Magnitude < 0.1 then
+                                directionVector = prevPartRot.LookVector
+                            end
+
+                            local targetPosition = prevPartPos + directionVector * self.snakeDistance
+                            local targetRotation = prevPartRot
+                            local targetCFrame = CFrame.new(targetPosition) * targetRotation
+                            self.targetPositions[partName] = targetCFrame
+                        end
+
+                        local smoothCFrame = self.previousPositions[partName]:Lerp(self.targetPositions[partName], self.snakeSmoothing)
+                        currentPart.CFrame = smoothCFrame
+                        currentPart.AssemblyLinearVelocity = Vector3.zero
+                        currentPart.AssemblyAngularVelocity = Vector3.zero
+                        self.previousPositions[partName] = smoothCFrame
+                    end
+                end
+            end
+        else
+            local pathLen = #self.pathHistory
+            local cumDist = {}
+            cumDist[1] = 0
+            for j = 2, pathLen do
+                cumDist[j] = cumDist[j-1] + (self.pathHistory[j-1].pos - self.pathHistory[j].pos).Magnitude
+            end
+
+            for i = 1, #activeSnakeParts do
+                local partName = activeSnakeParts[i]
+                local currentPart = self.originalCharacter:FindFirstChild(partName)
+                if currentPart then
+                    local desiredDist = (i-1) * self.snakeDistance
+
+                    local idx = nil
+                    for j = 2, pathLen do
+                        if cumDist[j] >= desiredDist then
+                            idx = j
+                            break
+                        end
+                    end
+                    if idx and self.pathHistory[idx] and self.pathHistory[idx-1] then
+                        local d1 = cumDist[idx-1]
+                        local d2 = cumDist[idx]
+                        local alpha = (desiredDist - d1) / math.max(1e-6, d2 - d1)
+                        local pos1 = self.pathHistory[idx-1].pos
+                        local pos2 = self.pathHistory[idx].pos
+                        local rot1 = self.pathHistory[idx-1].rot
+                        local rot2 = self.pathHistory[idx].rot
+                        local interpPos = pos1:Lerp(pos2, alpha)
+
+                        local interpRot = rot1
+                        local targetCFrame = CFrame.new(interpPos) * interpRot
+                        if not self.previousPositions[partName] then self.previousPositions[partName] = currentPart.CFrame end
+                        if not self.targetPositions[partName] then self.targetPositions[partName] = currentPart.CFrame end
+                        self.targetPositions[partName] = targetCFrame
+                        local smoothCFrame = self.previousPositions[partName]:Lerp(self.targetPositions[partName], self.snakeSmoothing)
+                        currentPart.CFrame = smoothCFrame
+                        currentPart.AssemblyLinearVelocity = Vector3.zero
+                        currentPart.AssemblyAngularVelocity = Vector3.zero
+                        self.previousPositions[partName] = smoothCFrame
+                    else
+                        local rootCFrame = rootPart.CFrame
+                        local offset = rootCFrame.LookVector * (-(i-1) * self.snakeDistance)
+                        local spacedCFrame = rootCFrame + offset
+                        currentPart.CFrame = spacedCFrame
+                        self.previousPositions[partName] = spacedCFrame
+                    end
+                end
+            end
+        end
+    end,
+    startSnake = function(self)
+        local char = LocalPlayer.Character
+        if not char then return end
+        local humanoid = char:FindFirstChildWhichIsA("Humanoid")
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not humanoid or not root then return end
+        if self.originalCharacter or self.ghostClone then return end 
+
+        self.originalCharacter = char
+        self.originalCFrame = root.CFrame
+        char.Archivable = true
+        self.ghostClone = char:Clone()
+        char.Archivable = false
+        self.ghostClone.Name = self.originalCharacter.Name .. "_clone"
+        local ghostHumanoid = self.ghostClone:FindFirstChildWhichIsA("Humanoid")
+        if ghostHumanoid then
+            ghostHumanoid.DisplayName = self.originalCharacter.Name .. "_clone"
+            ghostHumanoid:ChangeState(Enum.HumanoidStateType.Physics) 
+        end
+        if not self.ghostClone.PrimaryPart then
+            local hrp = self.ghostClone:FindFirstChild("HumanoidRootPart")
+            if hrp then self.ghostClone.PrimaryPart = hrp end
+        end
+        for _, part in ipairs(self.ghostClone:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.Transparency = 1; part.CanCollide = false; part.Anchored = false; part.CanQuery = false
+            elseif part:IsA("Decal") then part.Transparency = 1
+            elseif part:IsA("Accessory") then
+                local handle = part:FindFirstChild("Handle")
+                if handle then handle.Transparency = 1; handle.CanCollide = false; handle.CanQuery = false end
+            end
+        end
+        local animate = self.originalCharacter:FindFirstChild("Animate")
+        if animate then 
+            self.originalAnimateScript = animate 
+            self.originalAnimateScript.Disabled = true 
+            self.originalAnimateScript.Parent = self.ghostClone 
+        end
+        self:preserveGuis()
+        self.ghostClone.Parent = Workspace
+        LocalPlayer.Character = self.ghostClone
+        if ghostHumanoid then Workspace.CurrentCamera.CameraSubject = ghostHumanoid end
+        self:restoreGuis()
+        if self.originalAnimateScript and self.originalAnimateScript.Parent == self.ghostClone then 
+            self.originalAnimateScript.Disabled = false 
+        end
+
+        pcall(function()
+            local args = {"Ball"}
+            game:GetService("ReplicatedStorage"):WaitForChild("Ragdoll"):FireServer(unpack(args))
+        end)
+
+        self.targetPositions = {}
+        self.previousPositions = {}
+        self.lastUpdateTime = tick()
+
+        if self.updateConnection then self.updateConnection:Disconnect(); self.updateConnection = nil end
+        if self.renderStepConnection then self.renderStepConnection:Disconnect(); self.renderStepConnection = nil end
+
+        self.updateConnection = RunService.Heartbeat:Connect(function(dt)
+            self:updateSnakeParts(dt)
+        end)
+
+        self.ghostEnabled = true
+        self.snakeEnabled = true
+        self.toggle.Text = "ON"
+        self.toggle.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+    end,
+    stopSnake = function(self)
+        if not self.originalCharacter or not self.ghostClone then return end 
+        if self.updateConnection then self.updateConnection:Disconnect(); self.updateConnection = nil end
+        if self.renderStepConnection then self.renderStepConnection:Disconnect(); self.renderStepConnection = nil end 
+
+        pcall(function()
+            game:GetService("ReplicatedStorage"):WaitForChild("Unragdoll"):FireServer()
+        end)
+
+        local targetCFrame = self.originalCFrame
+        local ghostPrimary = self.ghostClone.PrimaryPart
+        if ghostPrimary then targetCFrame = ghostPrimary.CFrame end
+
+        local animate = self.ghostClone:FindFirstChild("Animate")
+        if animate then animate.Disabled = true; animate.Parent = self.originalCharacter end 
+
+        self.ghostClone:Destroy(); self.ghostClone = nil 
+
+        if self.originalCharacter and self.originalCharacter.Parent then
+            local origRoot = self.originalCharacter:FindFirstChild("HumanoidRootPart")
+            local origHumanoid = self.originalCharacter:FindFirstChildWhichIsA("Humanoid")
+
+            if origRoot then
+                 origRoot.CFrame = targetCFrame 
+                 origRoot.AssemblyLinearVelocity = Vector3.zero 
+                 origRoot.AssemblyAngularVelocity = Vector3.zero
+            end
+            self:preserveGuis()
+            LocalPlayer.Character = self.originalCharacter 
+            if origHumanoid then
+                 Workspace.CurrentCamera.CameraSubject = origHumanoid 
+                 origHumanoid:ChangeState(Enum.HumanoidStateType.GettingUp) 
+            end
+            self:restoreGuis()
+            if animate and animate.Parent == self.originalCharacter then 
+                task.wait(0.1)
+                animate.Disabled = false 
+            end 
+        end
+        self.originalCharacter = nil
+        self.originalAnimateScript = nil
+        self.ghostEnabled = false
+        self.snakeEnabled = false
+        self.toggle.Text = "OFF"
+        self.toggle.BackgroundColor3 = Color3.fromRGB(80, 100, 200)
+    end,
+    toggleSnake = function(self)
+        if self.snakeEnabled then
+            self:stopSnake()
+        else
+            self:startSnake()
+        end
+    end,
+    addCorner = function(self, element, radius)
+        self:createElement("UICorner", element, {CornerRadius = UDim.new(0, radius or 10)})
+    end,
+    addBorder = function(self, element, color, thickness, transparency)
+        self:createElement(
+            "UIStroke",
+            element,
+            {
+                Color = color or Color3.fromRGB(100, 150, 255),
+                Thickness = thickness or 2,
+                Transparency = transparency or 0.3
+            }
+        )
+    end,
+    minimizeToggle = function(self)
+        self.isMinimized = not self.isMinimized
+        if self.isMinimized then
+            if not self.squareIcon then
+                self.squareIcon = Instance.new("Frame")
+                self.squareIcon.Size = UDim2.new(0, 50, 0, 50)
+                self.squareIcon.Position = self.main.Position
+                self.squareIcon.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+                self.squareIcon.BorderSizePixel = 0
+                self.squareIcon.ZIndex = 100
+                self.squareIcon.Visible = false
+                self.squareIcon.Parent = self.main.Parent
+
+                self:addCorner(self.squareIcon, 12)
+                self:addBorder(self.squareIcon, Color3.fromRGB(100, 150, 255), 2, 0.3)
+
+                local iconLabel = Instance.new("TextLabel")
+                iconLabel.Size = UDim2.new(1, 0, 1, 0)
+                iconLabel.BackgroundTransparency = 1
+                iconLabel.Text = "S"
+                iconLabel.Font = Enum.Font.GothamBold
+                iconLabel.TextSize = 20
+                iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                iconLabel.TextXAlignment = Enum.TextXAlignment.Center
+                iconLabel.TextYAlignment = Enum.TextYAlignment.Center
+                iconLabel.ZIndex = 101
+                iconLabel.Parent = self.squareIcon
+                
+                local dragging = false
+                local dragStart = nil
+                local startPos = nil
+
+                self.squareIcon.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        if not self.isDraggingSlider then
+                            dragging = true
+                            dragStart = input.Position
+                            startPos = self.squareIcon.Position
+                        end
+                    end
+                end)
+
+                UserInputService.InputChanged:Connect(function(input)
+                    if dragging and input.UserInputType == Enum.UserInputType.MouseMovement and not self.isDraggingSlider then
+                        local delta = input.Position - dragStart
+                        self.squareIcon.Position = UDim2.new(
+                            startPos.X.Scale,
+                            startPos.X.Offset + delta.X,
+                            startPos.Y.Scale,
+                            startPos.Y.Offset + delta.Y
+                        )
+                    end
+                end)
+
+                UserInputService.InputEnded:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                        dragging = false
+                    end
+                end)
+                
+                local clickConnection
+                clickConnection = self.squareIcon.InputBegan:Connect(function(input)
+                    if input.UserInputType == Enum.UserInputType.MouseButton1 and not dragging then
+                        task.wait(0.1)
+                        if not dragging then
+                            self:minimizeToggle()
+                        end
+                    end
+                end)
+            end
+
+            self.toggle.Visible = false
+            self.distanceSlider.Visible = false
+            self.swingButton.Visible = false
+            self.titleBar.Visible = false
+            self.minimizeButton.Visible = false
+
+            self.squareIcon.Position = self.main.Position
+            self.squareIcon.Size = self.main.Size
+            self.squareIcon.Visible = true
+            
+            local mainTween = TweenService:Create(
+                self.main,
+                TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                {Size = UDim2.new(0, 50, 0, 50)}
+            )
+
+            local squareTween = TweenService:Create(
+                self.squareIcon,
+                TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                {Size = UDim2.new(0, 50, 0, 50)}
+            )
+
+            mainTween:Play()
+            squareTween:Play()
+
+            task.spawn(function()
+                task.wait(0.4)
+                self.main.Visible = false
+            end)
+        else
+            if self.squareIcon then
+                self.main.Position = self.squareIcon.Position
+                self.main.Size = UDim2.new(0, 50, 0, 50)
+                self.squareIcon.Visible = false
+            end
+
+            self.main.Visible = true
+            local expandTween = TweenService:Create(
+                self.main,
+                TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+                {Size = UDim2.new(0, 280, 0, 180)}
+            )
+            expandTween:Play()
+
+            expandTween.Completed:Connect(function()
+                self.toggle.Visible = true
+                self.distanceSlider.Visible = true
+                self.swingButton.Visible = true
+                self.minimizeButton.Visible = true
+                self.titleBar.Visible = true
+            end)
+        end
+    end,
+    closeGUI = function(self)
+        if self.snakeEnabled then
+            self:stopSnake()
+        end
+        if self.gui then
+            self.gui:Destroy()
+            self.gui = nil
+        end
+    end,
+    execute = function(self, args)
+        if not self.gui then
+            self:createGUI()
+        else
+            self:toggleSnake()
+        end
+    end,
+    onUnload = function(self)
+        if self.snakeEnabled then
+            self:stopSnake()
+        end
+        if self.gui then
+            self.gui:Destroy()
+        end
+    end
+}
+
+snakeModule:createGUI()
+return snakeModule
