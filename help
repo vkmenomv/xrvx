@@ -1,0 +1,321 @@
+local env = getgenv()
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+
+local helpModule = {
+    name = "help",
+    gui = nil,
+    isOpen = false,
+    api = env.API,
+
+    createGUI = function(self)
+        if self.gui then self.gui:Destroy() end
+        
+        local screenGui = Instance.new("ScreenGui")
+        screenGui.Name = "HelpGUI"
+        screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        screenGui.ResetOnSpawn = false
+        screenGui.Parent = game:GetService("CoreGui")
+        
+        local mainFrame = Instance.new("Frame")
+        mainFrame.Name = "MainFrame"
+        mainFrame.Size = UDim2.new(0, 300, 0, 300)
+        mainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+        mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+        mainFrame.BorderSizePixel = 0
+        mainFrame.Visible = false
+        mainFrame.Parent = screenGui
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 12)
+        corner.Parent = mainFrame
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = Color3.fromRGB(100, 150, 255)
+        stroke.Thickness = 2
+        stroke.Transparency = 0.3
+        stroke.Parent = mainFrame
+        
+        local titleBar = Instance.new("Frame")
+        titleBar.Name = "TitleBar"
+        titleBar.Size = UDim2.new(1, 0, 0, 40)
+        titleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+        titleBar.BorderSizePixel = 0
+        titleBar.Parent = mainFrame
+        
+        local titleCorner = Instance.new("UICorner")
+        titleCorner.CornerRadius = UDim.new(0, 12)
+        titleCorner.Parent = titleBar
+        
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, -80, 1, 0)
+        titleLabel.Position = UDim2.new(0, 15, 0, 0)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = "ASTRALIX Help"
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 16
+        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = titleBar
+        
+        local minimizeButton = Instance.new("TextButton")
+        minimizeButton.Size = UDim2.new(0, 30, 0, 30)
+        minimizeButton.Position = UDim2.new(1, -70, 0, 5)
+        minimizeButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+        minimizeButton.Text = "âˆ’"
+        minimizeButton.Font = Enum.Font.GothamBold
+        minimizeButton.TextSize = 16
+        minimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        minimizeButton.BorderSizePixel = 0
+        minimizeButton.Parent = titleBar
+        
+        local minimizeCorner = Instance.new("UICorner")
+        minimizeCorner.CornerRadius = UDim.new(0, 6)
+        minimizeCorner.Parent = minimizeButton
+        
+        local closeButton = Instance.new("TextButton")
+        closeButton.Size = UDim2.new(0, 30, 0, 30)
+        closeButton.Position = UDim2.new(1, -35, 0, 5)
+        closeButton.BackgroundColor3 = Color3.fromRGB(255, 100, 120)
+        closeButton.Text = "Ã—"
+        closeButton.Font = Enum.Font.GothamBold
+        closeButton.TextSize = 16
+        closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        closeButton.BorderSizePixel = 0
+        closeButton.Parent = titleBar
+        
+        local closeCorner = Instance.new("UICorner")
+        closeCorner.CornerRadius = UDim.new(0, 6)
+        closeCorner.Parent = closeButton
+        
+        local scrollFrame = Instance.new("ScrollingFrame")
+        scrollFrame.Size = UDim2.new(1, -20, 1, -60)
+        scrollFrame.Position = UDim2.new(0, 10, 0, 50)
+        scrollFrame.BackgroundTransparency = 1
+        scrollFrame.BorderSizePixel = 0
+        scrollFrame.ScrollBarThickness = 6
+        scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 150, 255)
+        scrollFrame.Parent = mainFrame
+
+        local credits = Instance.new("TextLabel")
+        credits.Size = UDim2.new(1, 0, 0, 20)
+        credits.Position = UDim2.new(0, 180, 0, 10)
+        credits.BackgroundTransparency = 1
+        credits.Text = "discord.gg/akadmin"
+        credits.Font = Enum.Font.GothamBold
+        credits.TextSize = 14
+        credits.TextColor3 = Color3.fromRGB(255, 255, 255)
+        credits.TextXAlignment = Enum.TextXAlignment.Left
+        credits.Parent = mainFrame
+        local listLayout = Instance.new("UIListLayout")
+        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        listLayout.Padding = UDim.new(0, 5)
+        listLayout.Parent = scrollFrame
+        
+        self:populateCommands(scrollFrame)
+        
+        minimizeButton.MouseButton1Click:Connect(function()
+            self:minimizeGUI()
+        end)
+        
+        minimizeButton.MouseEnter:Connect(function()
+            TweenService:Create(minimizeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(130, 170, 255)}):Play()
+        end)
+        
+        minimizeButton.MouseLeave:Connect(function()
+            TweenService:Create(minimizeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(100, 150, 255)}):Play()
+        end)
+        
+        closeButton.MouseButton1Click:Connect(function()
+            self:closeGUI()
+        end)
+        
+        closeButton.MouseEnter:Connect(function()
+            TweenService:Create(closeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 130, 150)}):Play()
+        end)
+        
+        closeButton.MouseLeave:Connect(function()
+            TweenService:Create(closeButton, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 100, 120)}):Play()
+        end)
+        
+        self:makeDraggable(mainFrame, titleBar)
+        
+        self.gui = screenGui
+        self.mainFrame = mainFrame
+        self.scrollFrame = scrollFrame
+        
+        self.api:addToActive("help_gui", screenGui)
+        self:openGUI()
+    end,
+    
+    populateCommands = function(self, parent)
+        local categories = {}
+        local commands = self.api:getCommands()
+        for cmdName, cmdData in pairs(commands) do
+                local category = "Commands"
+                if not categories[category] then
+                    categories[category] = {}
+                end
+                table.insert(categories[category], {
+                name = cmdName
+            })
+        end
+        
+        local layoutOrder = 1
+        
+        for categoryName, commands in pairs(categories) do
+            local categoryFrame = Instance.new("Frame")
+            categoryFrame.Size = UDim2.new(1, 0, 0, 30)
+            categoryFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+            categoryFrame.BorderSizePixel = 0
+            categoryFrame.LayoutOrder = layoutOrder
+            categoryFrame.Parent = parent
+            
+            local categoryCorner = Instance.new("UICorner")
+            categoryCorner.CornerRadius = UDim.new(0, 8)
+            categoryCorner.Parent = categoryFrame
+            
+            local categoryLabel = Instance.new("TextLabel")
+            categoryLabel.Size = UDim2.new(1, -20, 1, 0)
+            categoryLabel.Position = UDim2.new(0, 10, 0, 0)
+            categoryLabel.BackgroundTransparency = 1
+            categoryLabel.Text = categoryName
+            categoryLabel.Font = Enum.Font.GothamBold
+            categoryLabel.TextSize = 14
+            categoryLabel.TextColor3 = Color3.fromRGB(100, 150, 255)
+            categoryLabel.TextXAlignment = Enum.TextXAlignment.Left
+            categoryLabel.Parent = categoryFrame
+            
+            layoutOrder = layoutOrder + 1
+            
+            for _, command in pairs(commands) do
+                local commandFrame = Instance.new("TextButton")
+                commandFrame.Size = UDim2.new(1, 0, 0, 50)
+                commandFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+                commandFrame.BorderSizePixel = 0
+                commandFrame.LayoutOrder = layoutOrder
+                commandFrame.AutoButtonColor = false
+                commandFrame.Text = ""
+                commandFrame.Parent = parent
+                
+                local commandCorner = Instance.new("UICorner")
+                commandCorner.CornerRadius = UDim.new(0, 8)
+                commandCorner.Parent = commandFrame
+                
+                local commandName = Instance.new("TextLabel")
+                commandName.Size = UDim2.new(0.3, -10, 1, 0)
+                commandName.Position = UDim2.new(0, 10, 0, 0)
+                commandName.BackgroundTransparency = 1
+                commandName.Text = command.name
+                commandName.Font = Enum.Font.GothamBold
+                commandName.TextSize = 14
+                commandName.TextColor3 = Color3.fromRGB(255, 255, 255)
+                commandName.TextXAlignment = Enum.TextXAlignment.Left
+                commandName.Parent = commandFrame
+                commandFrame.MouseEnter:Connect(function()
+                    TweenService:Create(commandFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                    }):Play()
+                end)
+                
+                commandFrame.MouseLeave:Connect(function()
+                    TweenService:Create(commandFrame, TweenInfo.new(0.2), {
+                        BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+                    }):Play()
+                end)
+                
+                commandFrame.MouseButton1Click:Connect(function()
+                    if self.api and self.api.moduleExecute then
+                        self.api.moduleExecute:execute(command.name)
+                    end
+                end)
+                
+                layoutOrder = layoutOrder + 1
+            end
+        end
+        
+        local contentSize = (layoutOrder - 1) * 55
+        parent.CanvasSize = UDim2.new(0, 0, 0, contentSize)
+    end,
+    
+    makeDraggable = function(self, frame, dragHandle)
+        local dragging = false
+        local dragStart = nil
+        local startPos = nil
+        
+        dragHandle.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = frame.Position
+            end
+        end)
+        
+        UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - dragStart
+                frame.Position = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + delta.Y
+                )
+            end
+        end)
+        
+        UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+    end,
+    
+    openGUI = function(self)
+        if not self.gui then return end
+        
+        self.isOpen = true
+        self.mainFrame.Visible = true
+        self.mainFrame.Size = UDim2.new(0, 50, 0, 50)
+        self.mainFrame.Position = UDim2.new(0.5, -25, 0.5, -25)
+        
+        TweenService:Create(self.mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 500, 0, 400),
+            Position = UDim2.new(0.5, -250, 0.5, -200)
+        }):Play()
+    end,
+    
+    minimizeGUI = function(self)
+        if not self.gui then return end
+        
+        self.isMinimized = not self.isMinimized
+        
+        if self.isMinimized then
+            TweenService:Create(self.mainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 500, 0, 40)}):Play()
+            self.scrollFrame.Visible = false
+        else
+            TweenService:Create(self.mainFrame, TweenInfo.new(0.3), {Size = UDim2.new(0, 500, 0, 400)}):Play()
+            self.scrollFrame.Visible = true
+        end
+    end,
+    
+    closeGUI = function(self)
+        if not self.gui then return end
+        
+        self.isOpen = false
+        
+        TweenService:Create(self.mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 50, 0, 50),
+            Position = UDim2.new(0.5, -25, 0.5, -25)
+        }):Play()
+        
+        task.wait(0.3)
+        self.mainFrame.Visible = false
+        if self.gui then
+            self.gui:Destroy()
+            self.gui = nil
+        end
+    end
+}
+
+helpModule:createGUI()
+return helpModule
