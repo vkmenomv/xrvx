@@ -1,0 +1,354 @@
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local Player = Players.LocalPlayer
+local env = getgenv()
+local keyModule = {
+    gui = nil,
+    isOpen = false,
+    validKey = nil,
+    
+    createElement = function(self, className, properties)
+        local element = Instance.new(className)
+        for prop, value in pairs(properties or {}) do
+            pcall(function() element[prop] = value end)
+        end
+        return element
+    end,
+    
+    addCorner = function(self, element, radius)
+        self:createElement("UICorner", {CornerRadius = UDim.new(0, radius or 10), Parent = element})
+    end,
+    
+    addBorder = function(self, element, color, thickness, transparency)
+        self:createElement("UIStroke", {
+            Color = color or Color3.fromRGB(100, 150, 255), 
+            Thickness = thickness or 2, 
+            Transparency = transparency or 0.3, 
+            Parent = element
+        })
+    end,
+    
+    addGradient = function(self, element, colors, rotation)
+        self:createElement("UIGradient", {
+            Color = ColorSequence.new(colors), 
+            Rotation = rotation or 90, 
+            Parent = element
+        })
+    end,
+    
+    createAuthGUI = function(self, onSuccess, onFail)
+        if self.gui then self.gui:Destroy() end
+        
+        local screenGui = self:createElement("ScreenGui", {
+            Name = "AstralixAuth",
+            ResetOnSpawn = false,
+            ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+            Parent = (syn and syn.protect_gui and game:GetService("CoreGui")) or (gethui and gethui()) or Player.PlayerGui
+        })
+        
+        if syn and syn.protect_gui then
+            syn.protect_gui(screenGui)
+        end
+        
+        local mainFrame = self:createElement("Frame", {
+            Size = UDim2.new(0, 320, 0, 160),
+            Position = UDim2.new(0.5, -160, 0, 20),
+            BackgroundColor3 = Color3.fromRGB(12, 12, 15),
+            BackgroundTransparency = 0.1,
+            BorderSizePixel = 0,
+            ZIndex = 101,
+            Parent = screenGui
+        })
+        
+        self:addCorner(mainFrame, 18)
+        self:addBorder(mainFrame, Color3.fromRGB(100, 150, 255), 2, 0.3)
+        
+        self:addGradient(mainFrame, {
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(15, 15, 20)),
+            ColorSequenceKeypoint.new(0.3, Color3.fromRGB(25, 25, 35)),
+            ColorSequenceKeypoint.new(0.7, Color3.fromRGB(30, 30, 40)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
+        }, 135)
+        
+        local headerFrame = self:createElement("Frame", {
+            Size = UDim2.new(1, 0, 0, 45),
+            BackgroundColor3 = Color3.fromRGB(20, 20, 30),
+            BorderSizePixel = 0,
+            ZIndex = 102,
+            Parent = mainFrame
+        })
+        
+        self:addCorner(headerFrame, 18)
+        self:addBorder(headerFrame, Color3.fromRGB(80, 120, 200), 1, 0.4)
+        
+        local avatarFrame = self:createElement("Frame", {
+            Size = UDim2.new(0, 32, 0, 32),
+            Position = UDim2.new(0, 12, 0, 6.5),
+            BackgroundColor3 = Color3.fromRGB(30, 30, 50),
+            BackgroundTransparency = 0.3,
+            BorderSizePixel = 0,
+            ZIndex = 103,
+            Parent = headerFrame
+        })
+        
+        self:addCorner(avatarFrame, 16)
+        self:addBorder(avatarFrame, Color3.fromRGB(100, 150, 255), 1, 0.6)
+        
+        local avatarImage = self:createElement("ImageLabel", {
+            Size = UDim2.new(1, -4, 1, -4),
+            Position = UDim2.new(0, 2, 0, 2),
+            BackgroundTransparency = 1,
+            Image = "https://www.roblox.com/headshot-thumbnail/image?userId=" .. tostring(Player.UserId) .. "&width=150&height=150&format=png",
+            ZIndex = 104,
+            Parent = avatarFrame
+        })
+        
+        self:addCorner(avatarImage, 14)
+        
+        local titleLabel = self:createElement("TextLabel", {
+            Size = UDim2.new(1, -55, 0, 20),
+            Position = UDim2.new(0, 50, 0, 8),
+            BackgroundTransparency = 1,
+            Text = "ASTRALIX",
+            Font = Enum.Font.GothamBold,
+            TextSize = 16,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 103,
+            Parent = headerFrame
+        })
+        
+        local statusLabel = self:createElement("TextLabel", {
+            Size = UDim2.new(1, -55, 0, 15),
+            Position = UDim2.new(0, 50, 0, 25),
+            BackgroundTransparency = 1,
+            Text = "Authentication required",
+            Font = Enum.Font.Gotham,
+            TextSize = 11,
+            TextColor3 = Color3.fromRGB(150, 150, 170),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ZIndex = 103,
+            Parent = headerFrame
+        })
+        
+        local keyInputFrame = self:createElement("Frame", {
+            Size = UDim2.new(1, -30, 0, 35),
+            Position = UDim2.new(0, 15, 0, 55),
+            BackgroundColor3 = Color3.fromRGB(20, 20, 25),
+            BorderSizePixel = 0,
+            ZIndex = 102,
+            Parent = mainFrame
+        })
+        
+        self:addCorner(keyInputFrame, 8)
+        self:addBorder(keyInputFrame, Color3.fromRGB(60, 60, 80), 1, 0.5)
+        
+        local keyInput = self:createElement("TextBox", {
+            Size = UDim2.new(1, -20, 1, 0),
+            Position = UDim2.new(0, 10, 0, 0),
+            BackgroundTransparency = 1,
+            Text = "",
+            PlaceholderText = "Enter authentication key...",
+            Font = Enum.Font.Gotham,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(240, 240, 245),
+            PlaceholderColor3 = Color3.fromRGB(120, 120, 130),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            ClearTextOnFocus = false,
+            ZIndex = 103,
+            Parent = keyInputFrame
+        })
+        
+        local buttonContainer = self:createElement("Frame", {
+            Size = UDim2.new(1, -30, 0, 35),
+            Position = UDim2.new(0, 15, 0, 105),
+            BackgroundTransparency = 1,
+            ZIndex = 102,
+            Parent = mainFrame
+        })
+        
+        local authenticateButton = self:createElement("TextButton", {
+            Size = UDim2.new(0.48, 0, 1, 0),
+            Position = UDim2.new(0, 0, 0, 0),
+            BackgroundColor3 = Color3.fromRGB(30, 130, 255),
+            Text = "Authenticate",
+            Font = Enum.Font.GothamBold,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            BorderSizePixel = 0,
+            ZIndex = 103,
+            Parent = buttonContainer
+        })
+        
+        self:addCorner(authenticateButton, 8)
+        
+        local getKeyButton = self:createElement("TextButton", {
+            Size = UDim2.new(0.48, 0, 1, 0),
+            Position = UDim2.new(0.52, 0, 0, 0),
+            BackgroundColor3 = Color3.fromRGB(60, 60, 80),
+            Text = "Get Key",
+            Font = Enum.Font.GothamBold,
+            TextSize = 13,
+            TextColor3 = Color3.fromRGB(200, 200, 220),
+            BorderSizePixel = 0,
+            ZIndex = 103,
+            Parent = buttonContainer
+        })
+        
+        self:addCorner(getKeyButton, 8)
+        
+        local function validateKey()
+            local enteredKey = keyInput.Text
+            if enteredKey == self.validKey then
+                statusLabel.Text = "Authentication successful!"
+                statusLabel.TextColor3 = Color3.fromRGB(100, 255, 150)
+                
+                task.spawn(function()
+                    self:saveKey(enteredKey)
+                    task.wait(1)
+                    self:closeAuth()
+                    if onSuccess then onSuccess() end
+                end)
+                return true
+            else
+                statusLabel.Text = "Invalid key. Please try again."
+                statusLabel.TextColor3 = Color3.fromRGB(255, 100, 120)
+                
+                TweenService:Create(keyInputFrame, TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, 0, true), {
+                    Position = UDim2.new(0, 20, 0, 55)
+                }):Play()
+                
+                task.spawn(function()
+                    task.wait(0.2)
+                    TweenService:Create(keyInputFrame, TweenInfo.new(0.1), {
+                        Position = UDim2.new(0, 15, 0, 55)
+                    }):Play()
+                end)
+                return false
+            end
+        end
+        
+        authenticateButton.MouseButton1Click:Connect(validateKey)
+        
+        getKeyButton.MouseButton1Click:Connect(function()
+            self:copyToClipboard("https://discord.gg/QdtYzhHhJ8")
+            statusLabel.Text = "Discord link copied to clipboard!"
+            statusLabel.TextColor3 = Color3.fromRGB(100, 150, 255)
+        end)
+        
+        keyInput.FocusLost:Connect(function(enterPressed)
+            if enterPressed then
+                validateKey()
+            end
+        end)
+        
+        authenticateButton.MouseEnter:Connect(function()
+            TweenService:Create(authenticateButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(140, 100, 220)
+            }):Play()
+        end)
+        
+        authenticateButton.MouseLeave:Connect(function()
+            TweenService:Create(authenticateButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(30, 130, 255)
+            }):Play()
+        end)
+        
+        getKeyButton.MouseEnter:Connect(function()
+            TweenService:Create(getKeyButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(80, 80, 100)
+            }):Play()
+        end)
+        
+        getKeyButton.MouseLeave:Connect(function()
+            TweenService:Create(getKeyButton, TweenInfo.new(0.2), {
+                BackgroundColor3 = Color3.fromRGB(60, 60, 80)
+            }):Play()
+        end)
+        
+        self.gui = screenGui
+        self.isOpen = true
+        
+        mainFrame.Size = UDim2.new(0, 50, 0, 50)
+        mainFrame.Position = UDim2.new(0.5, -25, 0, -50)
+        
+        TweenService:Create(mainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 320, 0, 160),
+            Position = UDim2.new(0.5, -160, 0, 20)
+        }):Play()
+        
+        task.spawn(function()
+            task.wait(0.5)
+            keyInput:CaptureFocus()
+        end)
+    end,
+    
+    closeAuth = function(self)
+        if not self.gui then return end
+        
+        local mainFrame = self.gui:FindFirstChild("Frame")
+        
+        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+            Size = UDim2.new(0, 50, 0, 50),
+            Position = UDim2.new(0.5, -25, 0, -50)
+        }):Play()
+        
+        task.spawn(function()
+            task.wait(0.3)
+            if self.gui then
+                self.gui:Destroy()
+                self.gui = nil
+            end
+            self.isOpen = false
+        end)
+    end,
+    
+    saveKey = function(self, key)
+        pcall(function()
+            if not isfolder("ASTRALIX") then
+                makefolder("ASTRALIX")
+            end
+            writefile("ASTRALIX/key", key)
+        end)
+    end,
+    
+    loadKey = function(self)
+        local success, key = pcall(function()
+            if isfile("ASTRALIX/key") then
+                return readfile("ASTRALIX/key")
+            end
+            return nil
+        end)
+        return success and key or nil
+    end,
+    
+    validateStoredKey = function(self)
+        local storedKey = self:loadKey()
+        return storedKey == self.validKey
+    end,
+    
+    copyToClipboard = function(self, text)
+        pcall(function()
+            if setclipboard then
+                setclipboard(text)
+            elseif toclipboard then
+                toclipboard(text)
+            end
+        end)
+    end,
+    
+    authenticate = function(self, validKey, onSuccess, onFail)
+        self.validKey = validKey
+        
+        if self:validateStoredKey() then
+            if onSuccess then onSuccess() end
+            return
+        end
+        
+        self:createAuthGUI(onSuccess, onFail)
+    end
+}
+
+return keyModule
