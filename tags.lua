@@ -60,7 +60,7 @@ if success and tagConfigRaw then
     end
 end
 
-local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL CHIPS", "AL RONALDU", "AL USER"}
+local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL SIGMA", "AL CHIPS", "AL RONALDU", "AL USER"}
 local playerToTag = {}
 for _, tag in ipairs(tagOrder) do
     local users = tagConfig[tag]
@@ -193,6 +193,22 @@ local RankData = {
         },
         emoji = "卐",
         image = ""
+    },
+    ["AL SIGMA"] = {
+        primary = Color3.fromRGB(0, 0, 0),
+        AnimateName = false,
+        GlitchName = false,
+        WaveText = true,
+        MatrixText = false,
+        RainbowText = false,
+        UseImage = true,
+        accent = ColorSequence.new {
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 128)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(138, 43, 226)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(75, 0, 130))
+        },
+        emoji = "",
+        image = "http://www.roblox.com/asset/?id=138567004945736"
     },
     ["AL CHIPS"] = {
         primary = Color3.fromRGB(20, 20, 20),
