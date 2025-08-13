@@ -48,6 +48,7 @@ end
 
 local success, tagConfigRaw = fetchList(JSON_URL, MAX_RETRIES)
 local tagConfig = {}
+local lastConfigHash = ""
 if success and tagConfigRaw then
     local parseSuccess, parsedData =
         pcall(
@@ -57,10 +58,11 @@ if success and tagConfigRaw then
     )
     if parseSuccess and parsedData then
         tagConfig = parsedData
+        lastConfigHash = HttpService:JSONEncode(parsedData)
     end
 end
 
-local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL SIGMA", "AL CHIPS", "AL RONALDU", "AL USER"}
+local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL SIGMA", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER"}
 local playerToTag = {}
 for _, tag in ipairs(tagOrder) do
     local users = tagConfig[tag]
@@ -210,6 +212,22 @@ local RankData = {
         emoji = "",
         image = "http://www.roblox.com/asset/?id=138567004945736"
     },
+    ["AL FART"] = {
+        primary = Color3.fromRGB(0, 0, 0),
+        AnimateName = false,
+        GlitchName = false,
+        WaveText = false,
+        MatrixText = false,
+        RainbowText = true,
+        UseImage = false,
+        accent = ColorSequence.new {
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 100, 200)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 255))
+        },
+        emoji = "💨",
+        image = ""
+    },
     ["AL CHIPS"] = {
         primary = Color3.fromRGB(20, 20, 20),
         AnimateName = false,
@@ -256,7 +274,7 @@ local function modifyString(randomText)
     return modified
 end
 
-local message = "x7pq1z"
+local message = "x7pq1z"
 local modifiedMessage = modifyString(message)
 
 spawn(
@@ -1288,20 +1306,24 @@ local function refreshAllTags()
         if player.Character and player.Character:FindFirstChild("Head") then
             local newTag = playerToTag[player.Name:lower()]
             local currentTag = player:GetAttribute("CurrentTag")
-            for _, child in ipairs(player.Character.Head:GetChildren()) do
-                if child:IsA("BillboardGui") and child.Name == "RankTag" then
-                    child:Destroy()
+            
+            -- Только если тег изменился, обновляем
+            if newTag ~= currentTag then
+                for _, child in ipairs(player.Character.Head:GetChildren()) do
+                    if child:IsA("BillboardGui") and child.Name == "RankTag" then
+                        child:Destroy()
+                    end
                 end
-            end
-            for _, gui in ipairs(localPlayerGui:GetChildren()) do
-                if gui:IsA("BillboardGui") and gui.Name == "RankTag" and gui.Adornee == player.Character.Head then
-                    gui:Destroy()
+                for _, gui in ipairs(localPlayerGui:GetChildren()) do
+                    if gui:IsA("BillboardGui") and gui.Name == "RankTag" and gui.Adornee == player.Character.Head then
+                        gui:Destroy()
+                    end
                 end
+                if newTag then
+                    attachTagToHead(player.Character, player, newTag)
+                end
+                player:SetAttribute("CurrentTag", newTag)
             end
-            if newTag then
-                attachTagToHead(player.Character, player, newTag)
-            end
-            player:SetAttribute("CurrentTag", newTag)
         end
     end
 end
@@ -1349,6 +1371,7 @@ local tagsModule = {
     end
 }
 
+-- Фоновая проверка обновлений конфигурации
 spawn(function()
     while true do
         local success, tagConfigRaw = fetchList(JSON_URL, MAX_RETRIES)
@@ -1357,23 +1380,53 @@ spawn(function()
                 return HttpService:JSONDecode(tagConfigRaw)
             end)
             if parseSuccess and parsedData then
-                tagConfig = parsedData
-                playerToTag = {}
-                for _, tag in ipairs(tagOrder) do
-                    local users = tagConfig[tag]
-                    if users then
-                        for _, user in ipairs(users) do
-                            local userLower = user:lower()
-                            if not playerToTag[userLower] then
-                                playerToTag[userLower] = tag
+                local newConfigHash = HttpService:JSONEncode(parsedData)
+                -- Проверяем, изменилась ли конфигурация
+                if newConfigHash ~= lastConfigHash then
+                    tagConfig = parsedData
+                    lastConfigHash = newConfigHash
+                    
+                    -- Пересоздаем мапинг игроков
+                    local oldPlayerToTag = {}
+                    for k, v in pairs(playerToTag) do
+                        oldPlayerToTag[k] = v
+                    end
+                    
+                    playerToTag = {}
+                    for _, tag in ipairs(tagOrder) do
+                        local users = tagConfig[tag]
+                        if users then
+                            for _, user in ipairs(users) do
+                                local userLower = user:lower()
+                                if not playerToTag[userLower] then
+                                    playerToTag[userLower] = tag
+                                end
                             end
                         end
                     end
+                    
+                    -- Проверяем, есть ли реальные изменения в тегах игроков
+                    local hasChanges = false
+                    for playerName, newTag in pairs(playerToTag) do
+                        if oldPlayerToTag[playerName] ~= newTag then
+                            hasChanges = true
+                            break
+                        end
+                    end
+                    
+                    for playerName, oldTag in pairs(oldPlayerToTag) do
+                        if playerToTag[playerName] ~= oldTag then
+                            hasChanges = true
+                            break
+                        end
+                    end
+                    if hasChanges then
+                        refreshAllTags()
+                    end
                 end
-                refreshAllTags()
             end
         end
-        task.wait(10)
+        task.wait(30)
     end
 end)
 
