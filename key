@@ -229,11 +229,9 @@ local keyModule = {
                 return false
             end
         end
-        
         authenticateButton.MouseButton1Click:Connect(validateKey)
-        
         getKeyButton.MouseButton1Click:Connect(function()
-            self:copyToClipboard("https://discord.gg/QdtYzhHhJ8")
+            self:copyToClipboard("https://linkvertise.com/983470/972.2667899140243/dynamic/?r=lK1mQiEV0+R+fcP4uMkzniuYXEmJe2ylA/rq3Tijfo7/v4/o7Rm4izBMxfXweS4/bQJJ5pcJmo+chOrOybop8dPjZqksN6BnykAXFjdvTa0NXgipXC20hMWVOJjsihK1f1aacztPpIfd7y9m2v7n5vz84cor3DAqY/9Lg2wFWbBnF6W094pLjJT56laDYFdCLEInw6CLMdyQFg6B0h9omqQ/1ayxLzvwvjTSMhURkpmvw5xX2ifP1aZo4MfONFRVFvLwpRqbggvCBsIoKdrwUSnSxOqDdATg2PsXQN0QOKnQ4PjjvcZuGA9z3qwkG91YUq3OpejrC0tsNPR0uAbwjQ==&v=2&o=sharing")
             statusLabel.Text = "Discord link copied to clipboard!"
             statusLabel.TextColor3 = Color3.fromRGB(100, 150, 255)
         end)
