@@ -62,7 +62,7 @@ if success and tagConfigRaw then
     end
 end
 
-local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL SIGMA", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER"}
+local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL MANGO", "AL SIGMA", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER"}
 local playerToTag = {}
 for _, tag in ipairs(tagOrder) do
     local users = tagConfig[tag]
@@ -194,6 +194,22 @@ local RankData = {
             ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
         },
         emoji = "卐",
+        image = ""
+    },
+    ["AL MANGO"] = {
+        primary = Color3.fromRGB(0, 0, 0),
+        AnimateName = true,
+        GlitchName = false,
+        WaveText = false,
+        MatrixText = false,
+        RainbowText = true,
+        UseImage = false,
+        accent = ColorSequence.new {
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 165, 0)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 140, 0)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 69, 0))
+        },
+        emoji = "🥭",
         image = ""
     },
     ["AL SIGMA"] = {
@@ -1306,8 +1322,6 @@ local function refreshAllTags()
         if player.Character and player.Character:FindFirstChild("Head") then
             local newTag = playerToTag[player.Name:lower()]
             local currentTag = player:GetAttribute("CurrentTag")
-            
-            -- Только если тег изменился, обновляем
             if newTag ~= currentTag then
                 for _, child in ipairs(player.Character.Head:GetChildren()) do
                     if child:IsA("BillboardGui") and child.Name == "RankTag" then
@@ -1371,7 +1385,6 @@ local tagsModule = {
     end
 }
 
--- Фоновая проверка обновлений конфигурации
 spawn(function()
     while true do
         local success, tagConfigRaw = fetchList(JSON_URL, MAX_RETRIES)
@@ -1381,12 +1394,9 @@ spawn(function()
             end)
             if parseSuccess and parsedData then
                 local newConfigHash = HttpService:JSONEncode(parsedData)
-                -- Проверяем, изменилась ли конфигурация
                 if newConfigHash ~= lastConfigHash then
                     tagConfig = parsedData
                     lastConfigHash = newConfigHash
-                    
-                    -- Пересоздаем мапинг игроков
                     local oldPlayerToTag = {}
                     for k, v in pairs(playerToTag) do
                         oldPlayerToTag[k] = v
@@ -1404,8 +1414,6 @@ spawn(function()
                             end
                         end
                     end
-                    
-                    -- Проверяем, есть ли реальные изменения в тегах игроков
                     local hasChanges = false
                     for playerName, newTag in pairs(playerToTag) do
                         if oldPlayerToTag[playerName] ~= newTag then
