@@ -1,0 +1,566 @@
+local NotificationHolder = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Module.Lua"))()
+local Notification = loadstring(game:HttpGet("https://raw.githubusercontent.com/BocusLuke/UI/main/STX/Client.Lua"))()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local TextChatService = game:GetService("TextChatService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+
+local prefixCharacter = "  "
+local suffixCharacter = "  "
+
+local letters = {
+    ["A"] = "Ḁַ",
+    ["B"] = "Ḃַ",
+    ["C"] = "Ḉַ",
+    ["D"] = "Ḍַ",
+    ["E"] = "Ẹַ",
+    ["F"] = "Ḟַ",
+    ["G"] = "Ḡַ",
+    ["H"] = "Ḥַ",
+    ["I"] = "Ịַ",
+    ["J"] = "J",
+    ["K"] = "Ḳַ",
+    ["L"] = "Ḷַ",
+    ["M"] = "Ṃַ",
+    ["N"] = "Ṇַ",
+    ["O"] = "Ọַ",
+    ["P"] = "Ṗַ",
+    ["Q"] = "Q",
+    ["R"] = "Ṛַ",
+    ["S"] = "Ṣַ",
+    ["T"] = "Ṭַ",
+    ["U"] = "Ụַ",
+    ["V"] = "Ṿַ",
+    ["W"] = "Ẉַ",
+    ["X"] = "Ẋַ",
+    ["Y"] = "Ỵַ",
+    ["Z"] = "Ẓַ",
+
+    ["a"] = "ạַ",
+    ["b"] = "ḃַ",
+    ["c"] = "ċַ",
+    ["d"] = "ḋַ",
+    ["e"] = "ẹַ",
+    ["f"] = "ḟַ",
+    ["g"] = "ġַ",
+    ["h"] = "ḥַ",
+    ["i"] = "ịַ",
+    ["j"] = "j",
+    ["k"] = "ḳַ",
+    ["l"] = "ḷַ",
+    ["m"] = "ṃַ",
+    ["n"] = "ṇַ",
+    ["o"] = "ọַ",
+    ["p"] = "ṗַ",
+    ["q"] = "q",
+    ["r"] = "ṛַ",
+    ["s"] = "ṣַ",
+    ["t"] = "ṭַ",
+    ["u"] = "ụַ",
+    ["v"] = "ṿַ",
+    ["w"] = "ẉַ",
+    ["x"] = "ẋַ",
+    ["y"] = "ỵַ",
+    ["z"] = "ẓַ",
+
+    [" "] = "  "
+}
+
+local wordReplacements = {
+    ["fuck"] = "ḞַỤַḈַḲַ",
+    ["FUCK"] = "ḞַỤַḈַḲַ",
+    ["Fuck"] = "ḞַỤַḈַḲַ",
+    ["fucking"] = "ḞַỤַḈַḲַỊַṄַḠַ",
+    ["FUCKING"] = "ḞַỤַḈַḲַỊַṄַḠַ",
+    ["Fucking"] = "ḞַỤַḈַḲַỊַṄַḠַ",
+    ["fucked"] = "ḞַỤַḈַḲַḚַḊַ",
+    ["FUCKED"] = "ḞַỤַḈַḲַḚַḊַ",
+    ["Fucked"] = "ḞַỤַḈַḲַḚַḊַ",
+    ["fucker"] = "ḞַỤַḈַḲַḚַṘַ",
+    ["FUCKER"] = "ḞַỤַḈַḲַḚַṘַ",
+    ["Fucker"] = "ḞַỤַḈַḲַḚַṘַ",
+    
+    ["nigger"] = "ṄַỊַḠַḠַḚַṘַ",
+    ["NIGGER"] = "ṄַỊַḠַḠַḚַṘַ",
+    ["Nigger"] = "ṄַỊַḠַḠַḚַṘַ",
+    ["nigga"] = "ṄַỊַḠַḠַḀַ",
+    ["NIGGA"] = "ṄַỊַḠַḠַḀַ",
+    ["Nigga"] = "ṄַỊַḠַḠַḀַ",
+    
+    ["bitch"] = "ḂַỊַṬַḈַḤַ",
+    ["BITCH"] = "ḂַỊַṬַḈַḤַ",
+    ["Bitch"] = "ḂַỊַṬַḈַḤַ",
+    ["bitches"] = "ḂַỊַṬַḈַḤַḚַṠַ",
+    ["BITCHES"] = "ḂַỊַṬַḈַḤַḚַṠַ",
+    ["Bitches"] = "ḂַỊַṬַḈַḤַḚַṠַ",
+    ["slut"] = "ṠַḺַỤַṬַ",
+    ["SLUT"] = "ṠַḺַỤַṬַ",
+    ["Slut"] = "ṠַḺַỤַṬַ",
+    ["sluts"] = "ṠַḺַỤַṬַṠַ",
+    ["SLUTS"] = "ṠַḺַỤַṬַṠַ",
+    ["Sluts"] = "ṠַḺַỤַṬַṠַ",
+    ["whore"] = "ẈַḤַỌַṘַḚַ",
+    ["WHORE"] = "ẈַḤַỌַṘַḚַ",
+    ["Whore"] = "ẈַḤַỌַṘַḚַ",
+    ["whores"] = "ẈַḤַỌַṘַḚַṠַ",
+    ["WHORES"] = "ẈַḤַỌַṘַḚַṠַ",
+    ["Whores"] = "ẈַḤַỌַṘַḚַṠַ",
+    
+    ["pussy"] = "ṖַỤַṠַṠַỴַ",
+    ["PUSSY"] = "ṖַỤַṠַṠַỴַ",
+    ["Pussy"] = "ṖַỤַṠַṠַỴַ",
+    ["dick"] = "ḊַỊַḈַḲַ",
+    ["DICK"] = "ḊַỊַḈַḲַ",
+    ["Dick"] = "ḊַỊַḈַḲַ",
+    ["cock"] = "ḈַỌַḈַḲַ",
+    ["COCK"] = "ḈַỌַḈַḲַ",
+    ["Cock"] = "ḈַỌַḈַḲַ",
+    ["penis"] = "ṖַḚַṄַỊַṠַ",
+    ["PENIS"] = "ṖַḚַṄַỊַṠַ",
+    ["Penis"] = "ṖַḚַṄַỊַṠַ",
+    ["vagina"] = "ṾַḀַḠַỊַṄַḀַ",
+    ["VAGINA"] = "ṾַḀַḠַỊַṄַḀַ",
+    ["Vagina"] = "ṾַḀַḠַỊַṄַḀַ",
+    ["tits"] = "ṬַỊַṬַṠַ",
+    ["TITS"] = "ṬַỊַṬַṠַ",
+    ["Tits"] = "ṬַỊַṬַṠַ",
+    ["boobs"] = "ḂַỌַỌַḂַṠַ",
+    ["BOOBS"] = "ḂַỌַỌַḂַṠַ",
+    ["Boobs"] = "ḂַỌַỌַḂַṠַ",
+    ["ass"] = "ḀַṠַṠַ",
+    ["ASS"] = "ḀַṠַṠַ",
+    ["Ass"] = "ḀַṠַṠַ",
+    
+    ["damn"] = "ḊַḀַṀַṆַ",
+    ["DAMN"] = "ḊַḀַṀַṆַ",
+    ["Damn"] = "ḊַḀַṀַṆַ",
+    ["shit"] = "ṠַḤַỊַṬַ",
+    ["SHIT"] = "ṠַḤַỊַṬַ",
+    ["Shit"] = "ṠַḤַỊַṬַ",
+    ["crap"] = "ḈַṘַḀַṖַ",
+    ["CRAP"] = "ḈַṘַḀַṖַ",
+    ["Crap"] = "ḈַṘַḀַṖַ",
+    ["hell"] = "ḤַḚַḺַḺַ",
+    ["HELL"] = "ḤַḚַḺַḺַ",
+    ["Hell"] = "ḤַḚַḺַḺַ",
+    ["bastard"] = "ḂַḀַṠַṬַḀַṘַḊַ",
+    ["BASTARD"] = "ḂַḀַṠַṬַḀַṘַḊַ",
+    ["Bastard"] = "ḂַḀַṠַṬַḀַṘַḊַ",
+    
+    ["noob"] = "ṄַỌַỌַḂַ",
+    ["NOOB"] = "ṄַỌַỌַḂַ",
+    ["Noob"] = "ṄַỌַỌַḂַ",
+    ["scrub"] = "ṠַḈַṘַỤַḂַ",
+    ["SCRUB"] = "ṠַḈַṘַỤַḂַ",
+    ["Scrub"] = "ṠַḈַṘַỤַḂַ",
+    ["trash"] = "ṬַṘַḀַṠַḤַ",
+    ["TRASH"] = "ṬַṘַḀַṠַḤַ",
+    ["Trash"] = "ṬַṘַḀַṠַḤַ",
+    ["toxic"] = "ṬַỌַẌַỊַḈַ",
+    ["TOXIC"] = "ṬַỌַẌַỊַḈַ",
+    ["Toxic"] = "ṬַỌַẌַỊַḈַ",
+    
+    ["idiot"] = "ỊַḊַỊַỌַṬַ",
+    ["IDIOT"] = "ỊַḊַỊַỌַṬַ",
+    ["Idiot"] = "ỊַḊַỊַỌַṬַ",
+    ["stupid"] = "ṠַṬַỤַṖַỊַḊַ",
+    ["STUPID"] = "ṠַṬַỤַṖַỊַḊַ",
+    ["Stupid"] = "ṠַṬַỤַṖַỊַḊַ",
+    ["dumb"] = "ḊַỤַṀַḂַ",
+    ["DUMB"] = "ḊַỤַṀַḂַ",
+    ["Dumb"] = "ḊַỤַṀַḂַ",
+    ["retard"] = "ṘַḚַṬַḀַṘַḊַ",
+    ["RETARD"] = "ṘַḚַṬַḀַṘַḊַ",
+    ["Retard"] = "ṘַḚַṬַḀַṘַḊַ",
+    ["moron"] = "ṀַỌַṘַỌַṆַ",
+    ["MORON"] = "ṀַỌַṘַỌַṆַ",
+    ["Moron"] = "ṀַỌַṘַỌַṆַ",
+    
+    ["kill"] = "ḲַỊַḺַḺַ",
+    ["KILL"] = "ḲַỊַḺַḺַ",
+    ["Kill"] = "ḲַỊַḺַḺַ",
+    ["die"] = "ḊַỊַḚַ",
+    ["DIE"] = "ḊַỊַḚַ",
+    ["Die"] = "ḊַỊַḚַ",
+    ["hate"] = "ḤַḀַṬַḚַ",
+    ["HATE"] = "ḤַḀַṬַḚַ",
+    ["Hate"] = "ḤַḀַṬַḚַ",
+    
+    ["rape"] = "ṘַḀַṖַḚַ",
+    ["RAPE"] = "ṘַḀַṖַḚַ",
+    ["Rape"] = "ṘַḀַṖַḚַ",
+    ["ill"] = "Ịַ'ḺַḺַ",
+    ["I'll"] = "Ịַ'ḺַḺַ",
+    ["the"] = "ṬַḤַḚַ",
+    ["THE"] = "ṬַḤַḚַ",
+    ["The"] = "ṬַḤַḚַ",
+    ["out"] = "ỌַỤַṬַ",
+    ["OUT"] = "ỌַỤַṬַ",
+    ["Out"] = "ỌַỤַṬַ",
+    ["of"] = "ỌַḞַ",
+    ["OF"] = "ỌַḞַ",
+    ["Of"] = "ỌַḞַ",
+    ["you"] = "ỴַỌַỤַ",
+    ["YOU"] = "ỴַỌַỤַ",
+    ["You"] = "ỴַỌַỤַ",
+    
+    ["go to hell"] = "ḠַỌַ ṬַỌַ ḤַḚַḺַḺַ",
+    ["GO TO HELL"] = "ḠַỌַ ṬַỌַ ḤַḚַḺַḺַ",
+    ["Go to hell"] = "ḠַỌַ ṬַỌַ ḤַḚַḺַḺַ",
+    ["fuck you"] = "ḞַỤַḈַḲַ ỴַỌַỤַ",
+    ["FUCK YOU"] = "ḞַỤַḈַḲַ ỴַỌַỤַ",
+    ["Fuck you"] = "ḞַỤַḈַḲַ ỴַỌַỤַ",
+    ["shut up"] = "ṠַḤַỤַṬַ ỤַṖַ",
+    ["SHUT UP"] = "ṠַḤַỤַṬַ ỤַṖַ",
+    ["Shut up"] = "ṠַḤַỤַṬַ ỤַṖַ",
+    ["piece of shit"] = "ṖַỊַḚַḈַḚַ ỌַḞַ ṠַḤַỊַṬַ",
+    ["PIECE OF SHIT"] = "ṖַỊַḚַḈַḚַ ỌַḞַ ṠַḤַỊַṬַ",
+    ["Piece of shit"] = "ṖַỊַḚַḈַḚַ ỌַḞ� ṠַḤַỊַṬַ",
+    ["son of a bitch"] = "ṠַỌַṆַ ỌַḞַ Ḁַ ḂַỊַṬַḈַḤַ",
+    ["SON OF A BITCH"] = "ṠַỌַṆַ ỌַḞַ Ḁַ ḂַỊַṬַḈַḤַ",
+    ["Son of a bitch"] = "ṠַỌַṆַ ỌַḞַ Ḁַ ḂַỊַṬַḈַḤַ",
+    ["kill yourself"] = "ḲַỊַḺַḺַ ỴַỌַỤַṘַṠַḚַḺַḞַ",
+    ["KILL YOURSELF"] = "ḲַỊַḺַḺַ ỴַỌַỤַṘַṠַḚַḺַḞַ",
+    ["Kill yourself"] = "ḲַỊַḺַḺַ ỴַỌַỤַṘַṠַḚַḺ�Ḟַ",
+    ["i hate you"] = "Ịַ ḤַḀַṬַḚַ ỴַỌַỤַ",
+    ["I HATE YOU"] = "Ịַ ḤַḀַṬַḚַ ỴַỌַỤַ",
+    ["I hate you"] = "Ịַ ḤַḀַṬַḚַ ỴַỌַỤַ",
+    ["what the fuck"] = "ẈַḤַḀַṬַ ṬַḤַḚַ ḞַỤַḈַḲַ",
+    ["WHAT THE FUCK"] = "ẈַḤַḀַṬַ ṬַḤַḚַ ḞַỤַḈַḲַ",
+    ["What the fuck"] = "ẈַḤַḀַṬַ ṬַḤַḚַ ḞַỤַḈַḲַ",
+    ["get fucked"] = "ḠַḚַṬַ ḞַỤַḈַḲַḚַḊַ",
+    ["GET FUCKED"] = "ḠַḚַṬַ ḞַỤַḈַḲַḚַḊַ",
+    ["Get fucked"] = "ḠַḚַṬַ ḞַỤַḈַḲַḚַḊַ",
+    ["you suck"] = "ỴַỌַỤַ ṠַỤַḈַḲַ",
+    ["YOU SUCK"] = "ỴַỌַỤַ ṠַỤַḈַḲַ",
+    ["You suck"] = "ỴַỌַỤַ ṠַỤַḈַḲַ",
+    ["go die"] = "ḠַỌַ ḊַỊַḚַ",
+    ["GO DIE"] = "ḠַỌַ ḊַỊַḚ�",
+    ["Go die"] = "ḠַỌַ ḊַỊַḚַ",
+    ["your mom"] = "ỴַỌַỤַṘַ ṀַỌַṀַ",
+    ["YOUR MOM"] = "ỴַỌַỤַṘַ ṀַỌַṀַ",
+    ["Your mom"] = "ỴַỌַỤַṘַ ṀַỌַṀַ",
+    ["stupid ass"] = "ṠַṬַỤַṖַỊַḊַ ḀַṠַṠַ",
+    ["STUPID ASS"] = "ṠַṬַỤַṖַỊַḊַ ḀַṠַṠַ",
+    ["Stupid ass"] = "ṠַṬַỤַṖַỊַḊַ ḀַṠַṠַ",
+    ["dumb fuck"] = "ḊַỤַṀַḂַ ḞַỤַḈַḲַ",
+    ["DUMB FUCK"] = "ḊַỤַṀַḂַ ḞַỤַḈַḲַ",
+    ["Dumb fuck"] = "ḊַỤַṀַḂַ ḞַỤַḈַḲַ"
+}
+
+local function replace(str, find_str, replace_str)
+    local escaped_find_str = find_str:gsub("[%-%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0")
+    return str:gsub(escaped_find_str, replace_str)
+end
+
+local function applyWordReplacements(message)
+    local convertedMessage = message
+    for word, replacement in pairs(wordReplacements) do
+        convertedMessage = convertedMessage:gsub("%f[%w]" .. word:gsub("[%-%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0") .. "%f[%W]", replacement)
+    end
+    return convertedMessage
+end
+
+local function filter(message, tableToUse, prefix, suffix)
+    local convertedMessage = applyWordReplacements(message)
+    
+    for letter, replacement in pairs(tableToUse) do
+        convertedMessage = replace(convertedMessage, letter, replacement)
+    end
+    return prefix .. convertedMessage .. suffix
+end
+
+local function showNotification(title, text)
+    Notification:Notify(
+        {Title = title, Description = text},
+        {OutlineColor = Color3.fromRGB(80, 80, 80), Time = 3, Type = "default"}
+    )
+end
+
+local GUI = Instance.new("ScreenGui")
+GUI.Name = "ProfessionalChatBypass"
+GUI.ResetOnSpawn = false
+GUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+GUI.Parent = game:GetService("CoreGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Name = "MainFrame"
+MainFrame.Size = UDim2.new(0, 280, 0, 120)
+MainFrame.Position = UDim2.new(1, -290, 0.5, -60)
+MainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+MainFrame.BackgroundTransparency = 0.3
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = GUI
+
+local Shadow = Instance.new("ImageLabel")
+Shadow.Name = "Shadow"
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.BackgroundTransparency = 1
+Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+Shadow.Size = UDim2.new(1, 30, 1, 30)
+Shadow.Image = "rbxassetid://6014257812"
+Shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+Shadow.ImageTransparency = 0.3
+Shadow.Parent = MainFrame
+
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 6)
+Corner.Parent = MainFrame
+
+local TitleBar = Instance.new("Frame")
+TitleBar.Name = "TitleBar"
+TitleBar.Size = UDim2.new(1, 0, 0, 30)
+TitleBar.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+TitleBar.BackgroundTransparency = 0.3
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 6)
+TitleCorner.Parent = TitleBar
+
+local TitleGradient = Instance.new("UIGradient")
+TitleGradient.Color = ColorSequence.new({
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+})
+TitleGradient.Parent = TitleBar
+
+local Title = Instance.new("TextLabel")
+Title.Name = "Title"
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 28, 0, 0)
+Title.BackgroundTransparency = 1
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 14
+Title.Font = Enum.Font.GothamBold
+Title.Text = "AK CHAT BYPASSER"
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Parent = TitleBar
+
+local CloseButton = Instance.new("TextButton")
+CloseButton.Name = "CloseButton"
+CloseButton.Size = UDim2.new(0, 24, 0, 24)
+CloseButton.Position = UDim2.new(1, -27, 0, 3)
+CloseButton.BackgroundColor3 = Color3.fromRGB(150, 0, 0)
+CloseButton.BackgroundTransparency = 0.3
+CloseButton.Text = "×"
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.TextSize = 16
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.Parent = TitleBar
+
+local CloseCorner = Instance.new("UICorner")
+CloseCorner.CornerRadius = UDim.new(0, 4)
+CloseCorner.Parent = CloseButton
+
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Name = "MinimizeButton"
+MinimizeButton.Size = UDim2.new(0, 24, 0, 24)
+MinimizeButton.Position = UDim2.new(1, -54, 0, 3)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 0)
+MinimizeButton.BackgroundTransparency = 0.3
+MinimizeButton.Text = "-"
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.TextSize = 16
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.Parent = TitleBar
+
+local MinimizeCorner = Instance.new("UICorner")
+MinimizeCorner.CornerRadius = UDim.new(0, 4)
+MinimizeCorner.Parent = MinimizeButton
+
+local InputBox = Instance.new("TextBox")
+InputBox.Name = "InputBox"
+InputBox.Size = UDim2.new(1, -20, 0, 30)
+InputBox.Position = UDim2.new(0, 10, 0, 40)
+InputBox.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+InputBox.BackgroundTransparency = 0.3
+InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+InputBox.PlaceholderText = "Enter message..."
+InputBox.TextSize = 14
+InputBox.Font = Enum.Font.Gotham
+InputBox.ClearTextOnFocus = true
+InputBox.Parent = MainFrame
+
+local InputCorner = Instance.new("UICorner")
+InputCorner.CornerRadius = UDim.new(0, 4)
+InputCorner.Parent = InputBox
+
+local SendButton = Instance.new("TextButton")
+SendButton.Name = "SendButton"
+SendButton.Size = UDim2.new(0, 180, 0, 26)
+SendButton.Position = UDim2.new(0.5, -90, 1, -36)
+SendButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+SendButton.BackgroundTransparency = 0.3
+SendButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SendButton.Text = "Send"
+SendButton.TextSize = 14
+SendButton.Font = Enum.Font.GothamBold
+SendButton.Parent = MainFrame
+
+local SendCorner = Instance.new("UICorner")
+SendCorner.CornerRadius = UDim.new(0, 4)
+SendCorner.Parent = SendButton
+
+local StatusIndicator = Instance.new("Frame")
+StatusIndicator.Name = "StatusIndicator"
+StatusIndicator.Size = UDim2.new(0, 6, 0, 6)
+StatusIndicator.Position = UDim2.new(0, 12, 0, 12)
+StatusIndicator.BackgroundColor3 = Color3.fromRGB(0, 150, 0)
+StatusIndicator.BackgroundTransparency = 0.3
+StatusIndicator.Parent = TitleBar
+
+local StatusCorner = Instance.new("UICorner")
+StatusCorner.CornerRadius = UDim.new(1, 0)
+StatusCorner.Parent = StatusIndicator
+
+local function createButtonEffect(button)
+    local originalColor = button.BackgroundColor3
+    local originalTransparency = button.BackgroundTransparency
+
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = originalColor:Lerp(Color3.fromRGB(50, 50, 50), 0.3),
+            BackgroundTransparency = originalTransparency * 0.8
+        }):Play()
+    end)
+
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundColor3 = originalColor,
+            BackgroundTransparency = originalTransparency
+        }):Play()
+    end)
+
+    button.MouseButton1Down:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {
+            BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+            BackgroundTransparency = originalTransparency * 0.5
+        }):Play()
+    end)
+
+    button.MouseButton1Up:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.1), {
+            BackgroundColor3 = originalColor,
+            BackgroundTransparency = originalTransparency
+        }):Play()
+    end)
+end
+
+local function enableDragging(frame, handle)
+    local dragging = false
+    local dragStart, startPos
+
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or
+                         input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            local targetPos = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+            local tweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
+            TweenService:Create(frame, tweenInfo, {Position = targetPos}):Play()
+        end
+    end)
+end
+
+local minimized = false
+MinimizeButton.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    local targetSize = minimized and UDim2.new(0, 280, 0, 30) or UDim2.new(0, 280, 0, 120)
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+
+    TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
+    TweenService:Create(Shadow, tweenInfo, {Size = UDim2.new(1, 30, targetSize.Y.Scale, targetSize.Y.Offset + 30)}):Play()
+
+    InputBox.Visible = not minimized
+    SendButton.Visible = not minimized
+end)
+
+local function sendChat(msg)
+    local converted = filter(msg, letters, prefixCharacter, suffixCharacter)
+    
+    pcall(function()
+        if TextChatService.ChatVersion == Enum.ChatVersion.LegacyChatService then
+            local chatEvents = ReplicatedStorage:FindFirstChild("DefaultChatSystemChatEvents")
+            if chatEvents and chatEvents:FindFirstChild("SayMessageRequest") then
+                chatEvents.SayMessageRequest:FireServer(converted, "All")
+            end
+        else
+            if TextChatService.ChatInputBarConfiguration and TextChatService.ChatInputBarConfiguration.TargetTextChannel then
+                TextChatService.ChatInputBarConfiguration.TargetTextChannel:SendAsync(converted)
+            end
+        end
+    end)
+    InputBox.Text = ""
+end
+
+local function processText()
+    local inputText = InputBox.Text
+    if inputText ~= "" then
+       sendChat(inputText)
+    end
+end
+
+SendButton.MouseButton1Click:Connect(processText)
+InputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        processText()
+    end
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+    local fadeOut = TweenService:Create(MainFrame, tweenInfo, {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, 0, MainFrame.Position.Y.Scale, MainFrame.Position.Y.Offset)
+    })
+
+    fadeOut.Completed:Connect(function()
+        GUI:Destroy()
+    end)
+    fadeOut:Play()
+end)
+
+createButtonEffect(SendButton)
+createButtonEffect(CloseButton)
+createButtonEffect(MinimizeButton)
+
+enableDragging(MainFrame, TitleBar)
+
+InputBox.Focused:Connect(function()
+    TweenService:Create(InputBox, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+        BackgroundTransparency = 0.2
+    }):Play()
+end)
+
+InputBox.FocusLost:Connect(function()
+    TweenService:Create(InputBox, TweenInfo.new(0.2), {
+        BackgroundColor3 = Color3.fromRGB(15, 15, 15),
+        BackgroundTransparency = 0.3
+    }):Play()
+end)
