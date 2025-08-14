@@ -43,7 +43,7 @@ local function fetchList(url2, maxRetries)
             task.wait(delay)
         end
     end
-    return false, ""
+    return false
 end
 
 local success, tagConfigRaw = fetchList(JSON_URL, MAX_RETRIES)
