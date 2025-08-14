@@ -159,7 +159,7 @@ local RankData = {
         accent = ColorSequence.new {
             ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
             ColorSequenceKeypoint.new(0.5, Color3.fromRGB(20, 20, 20)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100)
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 100, 100))
         },
         emoji = "",
         image = "http://www.roblox.com/asset/?id=110638600335178"
