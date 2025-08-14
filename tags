@@ -17,7 +17,7 @@ local crequest =
     (syn and syn.request) or
     (typeof(request) == "function" and request) or
     (typeof(http) == "table" and http.request)
-local JSON_URL = "https://0x0.st/8C5Z.json"
+local JSON_URL = "https://pastes.io/raw/tags-23833"
 local MAX_RETRIES = 3
 
 local function fetchList(url2, maxRetries)
