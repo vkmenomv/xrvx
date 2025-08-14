@@ -15,11 +15,13 @@ local flyModule = {
     flyEnabled = false,
     flySpeed = 50,
     isMinimized = false,
-    flyAnimation = nil,
     bodyVelocity = nil,
     bodyGyro = nil,
     flyConnection = nil,
     inputFlags = {forward = false, back = false, left = false, right = false, up = false, down = false},
+    forwardHold = 0,
+    animations = {},
+    tracks = {},
     createElement = function(self, className, parent, properties)
         local element = Instance.new(className, parent)
         for property, value in pairs(properties) do
@@ -184,7 +186,7 @@ local flyModule = {
             "Frame",
             speedTrack,
             {
-                Size = UDim2.new(0.5, 0, 1, 0),
+                Size = UDim2.new(self.flySpeed / 100, 0, 1, 0),
                 BackgroundColor3 = Color3.fromRGB(100, 150, 255),
                 BorderSizePixel = 0
             }
@@ -216,9 +218,7 @@ local flyModule = {
 
         self.toggle.MouseEnter:Connect(
             function()
-                TweenService:Create(self.toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(100, 120, 255)}):Play(
-
-                )
+                TweenService:Create(self.toggle, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(100, 120, 255)}):Play()
             end
         )
 
@@ -326,24 +326,12 @@ local flyModule = {
                     return
                 end
 
-                if input.KeyCode == Enum.KeyCode.W then
-                    self.inputFlags.forward = true
-                end
-                if input.KeyCode == Enum.KeyCode.S then
-                    self.inputFlags.back = true
-                end
-                if input.KeyCode == Enum.KeyCode.A then
-                    self.inputFlags.left = true
-                end
-                if input.KeyCode == Enum.KeyCode.D then
-                    self.inputFlags.right = true
-                end
-                if input.KeyCode == Enum.KeyCode.Space then
-                    self.inputFlags.up = true
-                end
-                if input.KeyCode == Enum.KeyCode.LeftShift then
-                    self.inputFlags.down = true
-                end
+                if input.KeyCode == Enum.KeyCode.W then self.inputFlags.forward = true end
+                if input.KeyCode == Enum.KeyCode.S then self.inputFlags.back = true end
+                if input.KeyCode == Enum.KeyCode.A then self.inputFlags.left = true end
+                if input.KeyCode == Enum.KeyCode.D then self.inputFlags.right = true end
+                if input.KeyCode == Enum.KeyCode.E then self.inputFlags.up = true end
+                if input.KeyCode == Enum.KeyCode.Q then self.inputFlags.down = true end
             end
         )
 
@@ -353,123 +341,139 @@ local flyModule = {
                     return
                 end
 
-                if input.KeyCode == Enum.KeyCode.W then
-                    self.inputFlags.forward = false
-                end
-                if input.KeyCode == Enum.KeyCode.S then
-                    self.inputFlags.back = false
-                end
-                if input.KeyCode == Enum.KeyCode.A then
-                    self.inputFlags.left = false
-                end
-                if input.KeyCode == Enum.KeyCode.D then
-                    self.inputFlags.right = false
-                end
-                if input.KeyCode == Enum.KeyCode.Space then
-                    self.inputFlags.up = false
-                end
-                if input.KeyCode == Enum.KeyCode.LeftShift then
-                    self.inputFlags.down = false
-                end
+                if input.KeyCode == Enum.KeyCode.W then self.inputFlags.forward = false end
+                if input.KeyCode == Enum.KeyCode.S then self.inputFlags.back = false end
+                if input.KeyCode == Enum.KeyCode.A then self.inputFlags.left = false end
+                if input.KeyCode == Enum.KeyCode.D then self.inputFlags.right = false end
+                if input.KeyCode == Enum.KeyCode.E then self.inputFlags.up = false end
+                if input.KeyCode == Enum.KeyCode.Q then self.inputFlags.down = false end
             end
         )
     end,
     updateSpeedSlider = function(self, percentage)
         percentage = math.clamp(percentage, 0, 1)
-        self.flySpeed = math.floor(1 + percentage * 99)
+        self.flySpeed = math.floor(10 + percentage * 90)
         self.speedFill.Size = UDim2.new(percentage, 0, 1, 0)
     end,
-    playFlyAnimation = function(self)
-        if LocalPlayer.Character then
-            local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
-            if humanoid then
-                pcall(
-                    function()
-                        if self.flyAnimation then
-                            self.flyAnimation:Stop()
-                            self.flyAnimation:Destroy()
-                        end
-
-                        local animationId = "rbxassetid://282574440"
-                        local animation = Instance.new("Animation")
-                        animation.AnimationId = animationId
-
-                        self.flyAnimation = humanoid:LoadAnimation(animation)
-                        if self.flyAnimation then
-                            self.flyAnimation.Looped = true
-                            self.flyAnimation:Play()
-                        end
-                    end
-                )
-            end
+    newAnim = function(self, id)
+        local anim = Instance.new("Animation")
+        anim.AnimationId = "rbxassetid://" .. id
+        return anim
+    end,
+    stopAll = function(self)
+        for _, track in pairs(self.tracks) do
+            track:Stop()
         end
     end,
-    stopFlyAnimation = function(self)
-        if self.flyAnimation then
-            pcall(
-                function()
-                    self.flyAnimation:Stop()
-                    self.flyAnimation:Destroy()
-                    self.flyAnimation = nil
-                end
-            )
-        end
-    end,
-    updateFlyMovement = function(self)
+    updateFlyMovement = function(self, dt)
         if not self.bodyVelocity or not self.bodyGyro or not LocalPlayer.Character then
             return
         end
 
-        local camera = Workspace.CurrentCamera
         local humanoidRootPart = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         if not humanoidRootPart then
             return
         end
 
-        local dir = Vector3.new(0, 0, 0)
+        local camera = Workspace.CurrentCamera
+        if not self.inputFlags.forward then self.forwardHold = 0 end
+
+        local dir = Vector3.zero
         local camCF = camera.CFrame
 
-        if self.inputFlags.forward then
-            dir = dir + camCF.LookVector
-        end
-        if self.inputFlags.back then
-            dir = dir - camCF.LookVector
-        end
-        if self.inputFlags.left then
-            dir = dir - camCF.RightVector
-        end
-        if self.inputFlags.right then
-            dir = dir + camCF.RightVector
-        end
+        if self.inputFlags.forward then dir += camCF.LookVector end
+        if self.inputFlags.back then dir -= camCF.LookVector end
+        if self.inputFlags.left then dir -= camCF.RightVector end
+        if self.inputFlags.right then dir += camCF.RightVector end
+        if self.inputFlags.up then dir += Vector3.yAxis end
+        if self.inputFlags.down then dir -= Vector3.yAxis end
+
+        if dir.Magnitude > 0 then dir = dir.Unit end
+
+        local currentSpeed = self.flySpeed
+        
+        -- Animation and speed logic
         if self.inputFlags.up then
-            dir = dir + Vector3.new(0, 1, 0)
-        end
-        if self.inputFlags.down then
-            dir = dir - Vector3.new(0, 1, 0)
+            if not self.tracks.up.IsPlaying then self:stopAll(); self.tracks.up:Play() end
+        elseif self.inputFlags.down then
+            if not self.tracks.down.IsPlaying then self:stopAll(); self.tracks.down:Play() end
+        elseif self.inputFlags.left then
+            if not self.tracks.left1.IsPlaying then
+                self:stopAll()
+                self.tracks.left1:Play(); self.tracks.left1.TimePosition = 2.0; self.tracks.left1:AdjustSpeed(0)
+                self.tracks.left2:Play(); self.tracks.left2.TimePosition = 0.5; self.tracks.left2:AdjustSpeed(0)
+            end
+        elseif self.inputFlags.right then
+            if not self.tracks.right1.IsPlaying then
+                self:stopAll()
+                self.tracks.right1:Play(); self.tracks.right1.TimePosition = 1.1; self.tracks.right1:AdjustSpeed(0)
+                self.tracks.right2:Play(); self.tracks.right2.TimePosition = 0.5; self.tracks.right2:AdjustSpeed(0)
+            end
+        elseif self.inputFlags.back then
+            if not self.tracks.back1.IsPlaying then
+                self:stopAll()
+                self.tracks.back1:Play(); self.tracks.back1.TimePosition = 5.3; self.tracks.back1:AdjustSpeed(0)
+                self.tracks.back2:Play(); self.tracks.back2:AdjustSpeed(0)
+                self.tracks.back3:Play(); self.tracks.back3.TimePosition = 0.8; self.tracks.back3:AdjustSpeed(0)
+                self.tracks.back4:Play(); self.tracks.back4.TimePosition = 1; self.tracks.back4:AdjustSpeed(0)
+            end
+        elseif self.inputFlags.forward then
+            self.forwardHold += dt
+            if self.forwardHold >= 3 then
+                if not self.tracks.flyFast.IsPlaying then
+                    self:stopAll()
+                    currentSpeed = self.flySpeed * 1.3
+                    self.tracks.flyFast:Play(); self.tracks.flyFast:AdjustSpeed(0.05)
+                end
+            else
+                if not self.tracks.flyLow1.IsPlaying then
+                    self:stopAll()
+                    currentSpeed = self.flySpeed
+                    self.tracks.flyLow1:Play()
+                    self.tracks.flyLow2:Play()
+                end
+            end
+        else
+            if not self.tracks.idle1.IsPlaying then
+                self:stopAll()
+                self.tracks.idle1:Play(); self.tracks.idle1:AdjustSpeed(0)
+            end
         end
 
-        if dir.Magnitude > 0 then
-            dir = dir.Unit
-        end
-
-        self.bodyVelocity.Velocity = dir * self.flySpeed
+        self.bodyVelocity.Velocity = dir * currentSpeed
         self.bodyGyro.CFrame = camCF
-
-        local isMovingForward = self.inputFlags.forward
-
-        if isMovingForward and not self.flyAnimation then
-            self:playFlyAnimation()
-        elseif not isMovingForward and self.flyAnimation then
-            self:stopFlyAnimation()
-        end
     end,
     startFly = function(self)
-        if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+        local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+        local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+        local humanoid = character:FindFirstChild("Humanoid")
+        
+        if not humanoidRootPart or not humanoid then
             return
         end
 
-        local humanoidRootPart = LocalPlayer.Character.HumanoidRootPart
-        local humanoid = LocalPlayer.Character:FindFirstChild("Humanoid")
+        -- Animation Loading
+        self.animations = {
+            forward = self:newAnim(90872539),
+            up = self:newAnim(90872539),
+            right1 = self:newAnim(136801964),
+            right2 = self:newAnim(142495255),
+            left1 = self:newAnim(136801964),
+            left2 = self:newAnim(142495255),
+            flyLow1 = self:newAnim(97169019),
+            flyLow2 = self:newAnim(282574440),
+            flyFast = self:newAnim(282574440),
+            back1 = self:newAnim(136801964),
+            back2 = self:newAnim(106772613),
+            back3 = self:newAnim(42070810),
+            back4 = self:newAnim(214744412),
+            down = self:newAnim(233322916),
+            idle1 = self:newAnim(97171309)
+        }
+
+        for name, anim in pairs(self.animations) do
+            self.tracks[name] = humanoid:LoadAnimation(anim)
+        end
 
         local success =
             pcall(
@@ -493,15 +497,13 @@ local flyModule = {
                         CFrame = humanoidRootPart.CFrame
                     }
                 )
-
-                if humanoid then
-                    humanoid.PlatformStand = true
-                end
+                
+                humanoid.PlatformStand = true
 
                 self.flyConnection =
                     RunService.RenderStepped:Connect(
-                    function()
-                        self:updateFlyMovement()
+                    function(dt)
+                        self:updateFlyMovement(dt)
                     end
                 )
             end
@@ -514,7 +516,7 @@ local flyModule = {
         end
     end,
     stopFly = function(self)
-        self:stopFlyAnimation()
+        self:stopAll()
 
         if self.bodyVelocity then
             pcall(
@@ -551,7 +553,7 @@ local flyModule = {
                 end
             )
         end
-
+        
         self.flyEnabled = false
         self.toggle.Text = "OFF"
         self.toggle.BackgroundColor3 = Color3.fromRGB(80, 100, 200)
