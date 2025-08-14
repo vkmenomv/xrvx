@@ -41,7 +41,7 @@ local function loadTagsFromJSON()
         end
     end
 
-    local tagOrder = {"AL DEV", "AL BOOSTER", "AL SWASTIKA", "AL CHIPS", "AL RONALDU", "AL USER"}
+    local tagOrder = {"AL OWNER", "AL BOOSTER", "AL SWASTIKA", "AL MANGO", "AL SIGMA", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER", "AL MZWSyn2", "AL danYT", "AL c00lkid"}
     local playerToTag = {}
     for _, tag in ipairs(tagOrder) do
         local users = tagConfig[tag]
@@ -56,61 +56,193 @@ local function loadTagsFromJSON()
     end
 
     local RankData = {
-        ["AL DEV"] = {
+        ["AL OWNER"] = {
             primary = Color3.fromRGB(20, 20, 20),
-            accent = ColorSequence.new{
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 100, 255)),
-                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 191, 255)),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(100, 200, 255))
+            AnimateName = false,
+            GlitchName = true,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = true,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 200, 255)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 100, 255)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 100, 255))
             },
             emoji = "",
-            priority = 1
+            image = "http://www.roblox.com/asset/?id=110638600335178"
         },
         ["AL BOOSTER"] = {
             primary = Color3.fromRGB(20, 20, 20),
-            accent = ColorSequence.new{
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = true,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = true,
+            accent = ColorSequence.new {
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(135, 206, 250)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(173, 216, 230)),
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 182, 193))
             },
             emoji = "",
-            priority = 2
+            image = "http://www.roblox.com/asset/?id=104877509615956"
         },
         ["AL RONALDU"] = {
             primary = Color3.fromRGB(20, 20, 20),
-            accent = ColorSequence.new{
+            AnimateName = false,
+            GlitchName = true,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = true,
+            accent = ColorSequence.new {
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(100, 50, 150)),
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(128, 0, 128))
             },
             emoji = "",
-            priority = 3
+            image = "http://www.roblox.com/asset/?id=72736122747722"
+        },
+        ["AL danYT"] = {
+            primary = Color3.fromRGB(20, 20, 20),
+            AnimateName = true,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = true,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 0, 255)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(128, 0, 192)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 0, 0))
+            },
+            emoji = "",
+            image = "http://www.roblox.com/asset/?id=109142786823897"
+        },
+        ["AL c00lkid"] = {
+            primary = Color3.fromRGB(20, 20, 20),
+            AnimateName = true,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = true,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(128, 0, 0)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 0, 0))
+            },
+            emoji = "",
+            image = "http://www.roblox.com/asset/?id=138873111899938"
+        },
+        ["AL MZWSyn2"] = {
+            primary = Color3.fromRGB(20, 20, 20),
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = true,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = false,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 0, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(192, 0, 128)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(128, 0, 128))
+            },
+            emoji = "🍒",
+            image = ""
         },
         ["AL SWASTIKA"] = {
             primary = Color3.fromRGB(0, 0, 0),
-            accent = ColorSequence.new{
+            AnimateName = true,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = false,
+            accent = ColorSequence.new {
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(139, 0, 0)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(139, 0, 0)),
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(50, 50, 50))
             },
             emoji = "卐",
-            priority = 4
+            image = ""
+        },
+        ["AL MANGO"] = {
+            primary = Color3.fromRGB(0, 0, 0),
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = true,
+            UseImage = false,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 165, 0)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 140, 0)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 69, 0))
+            },
+            emoji = "🥭",
+            image = ""
+        },
+        ["AL SIGMA"] = {
+            primary = Color3.fromRGB(0, 0, 0),
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = true,
+            MatrixText = false,
+            RainbowText = false,
+            UseImage = true,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 128)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(138, 43, 226)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(75, 0, 130))
+            },
+            emoji = "",
+            image = "http://www.roblox.com/asset/?id=138567004945736"
+        },
+        ["AL FART"] = {
+            primary = Color3.fromRGB(0, 0, 0),
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = true,
+            UseImage = false,
+            accent = ColorSequence.new {
+                ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 50, 255)),
+                ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 100, 200)),
+                ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 150, 255))
+            },
+            emoji = "💨",
+            image = ""
         },
         ["AL CHIPS"] = {
             primary = Color3.fromRGB(20, 20, 20),
-            accent = ColorSequence.new{
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = false,
+            RainbowText = true,
+            UseImage = true,
+            accent = ColorSequence.new {
                 ColorSequenceKeypoint.new(0, Color3.fromRGB(128, 0, 128)),
                 ColorSequenceKeypoint.new(0.5, Color3.fromRGB(186, 85, 211)),
                 ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
             },
             emoji = "",
-            priority = 5
+            image = "http://www.roblox.com/asset/?id=77703346425816"
         },
         ["AL USER"] = {
             primary = Color3.fromRGB(20, 20, 20),
+            AnimateName = false,
+            GlitchName = false,
+            WaveText = false,
+            MatrixText = true,
+            RainbowText = false,
+            UseImage = true,
             accent = Color3.fromRGB(0, 150, 255),
             emoji = "",
-            priority = 6
+            image = "http://www.roblox.com/asset/?id=102657679128494"
         }
     }
 
