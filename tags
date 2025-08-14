@@ -148,6 +148,21 @@ local RankData = {
         emoji = "",
         image = "http://www.roblox.com/asset/?id=110638600335178"
     },
+    ["AL DEVELOPER"] = {
+        primary = Color3.fromRGB(20, 20, 20),
+        AnimateName = false,
+        GlitchName = true,
+        WaveText = true,
+        MatrixText = false,
+        RainbowText = false,
+        UseImage = true,
+        accent = ColorSequence.new {
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(100, 200, 255)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(150, 100, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 100, 255))
+        },
+        emoji = "",
+        image = "http://www.roblox.com/asset/?id=110638600335178"
     ["AL BOOSTER"] = {
         primary = Color3.fromRGB(20, 20, 20),
         AnimateName = false,
