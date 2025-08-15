@@ -166,7 +166,7 @@ local RankData = {
     },
     ["AL GAMBLER"] = {
         primary = Color3.fromRGB(1, 1, 1),
-        AnimateName = true,
+        AnimateName = false,
         GlitchName = true,
         WaveText = false,
         MatrixText = false,
