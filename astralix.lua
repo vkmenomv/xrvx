@@ -1485,10 +1485,10 @@ task.spawn(
             keyModule:authenticate(
                 SYSTEM.KEY,
                 function()
-                    initializeAstralix()
-                end)
-            else
                 initializeAstralix()
-            end
+            end)
+        else
+            initializeAstralix()
         end
-    )
+    end
+)
