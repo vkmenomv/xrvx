@@ -17,6 +17,7 @@
     "animspeed": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/animspeed",
     "ugc": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/ugc",
     "speaker": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/speaker.lua",
-    "fish": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/fish"
-    "unsuspend": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/unsuspend" 
+    "fish": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/fish",
+    "unsuspend": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/unsuspend",
+    "freezeanim": "https://raw.githubusercontent.com/vkmenomv/xrvx/main/freezeanim"
 }
