@@ -17,7 +17,7 @@ local crequest =
     (syn and syn.request) or
     (typeof(request) == "function" and request) or
     (typeof(http) == "table" and http.request)
-local JSON_URL = "https://dpaste.com/9TKT5MLGA.txt"
+local JSON_URL = "https://pastebin.com/raw/bESDzPcv"
 local MAX_RETRIES = 3
 
 local function fetchList(url2, maxRetries)
@@ -62,7 +62,7 @@ if success and tagConfigRaw then
     end
 end
 
-local tagOrder = {"AL OWNER", "AL DEVELOPER", "AL BOOSTER", "AL SWASTIKA", "AL MANGO", "AL SIGMA", "AL GAY", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER", "AL MZWSyn2", "AL danYT", "AL c00lkid"}
+local tagOrder = {"AL OWNER", "AL DEVELOPER", "AL GABMLER" "AL BOOSTER", "AL SWASTIKA", "AL MANGO", "AL SIGMA", "AL GAY", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER", "AL MZWSyn2", "AL danYT", "AL c00lkid"}
 local playerToTag = {}
 for _, tag in ipairs(tagOrder) do
     local users = tagConfig[tag]
@@ -163,6 +163,23 @@ local RankData = {
         },
         emoji = "",
         image = "http://www.roblox.com/asset/?id=140013014943385"
+    },
+    ["AL GAMBLER"] = {
+        primary = Color3.fromRGB(1, 1, 1),
+        AnimateName = true,
+        GlitchName = true,
+        WaveText = false,
+        MatrixText = false,
+        RainbowText = false,
+        UseImage = true,
+        accent = ColorSequence.new {
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(0, 255, 0)),
+            ColorSequenceKeypoint.new(0.33, Color3.fromRGB(50, 205, 50)),
+            ColorSequenceKeypoint.new(0.66, Color3.fromRGB(34, 139, 34)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 0))
+        },
+        emoji = "",
+        image = "http://www.roblox.com/asset/?id=70439823774782"
     },
     ["AL BOOSTER"] = {
         primary = Color3.fromRGB(20, 20, 20),
