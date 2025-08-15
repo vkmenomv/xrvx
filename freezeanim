@@ -1,0 +1,434 @@
+--!strict
+
+-- This script creates a GUI to toggle the character's movement, effectively "freezing" them in place.
+-- It achieves this by anchoring the HumanoidRootPart, locking the character in its current position.
+
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local env = getgenv()
+
+-- Module for toggling between default and "freeze" modes.
+local FreezeModule = {
+    name = "Freeze",
+    gui = nil,
+    isOpen = false,
+    api = env.API,
+    isMinimized = false,
+    
+    isFreezeModeActive = false,
+    
+    characterConnection = nil,
+    originalAnimations = {}, -- Table to store the original animation IDs
+    
+    createElement = function(self, className, parent, properties)
+        local element = Instance.new(className, parent)
+        for property, value in pairs(properties) do
+            element[property] = value
+        end
+        return element
+    end,
+
+    createGUI = function(self)
+        if self.gui then
+            self.gui:Destroy()
+        end
+
+        local gui =
+            self:createElement(
+            "ScreenGui",
+            game:GetService("CoreGui"),
+            {
+                Name = "FreezeGui",
+                ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
+                ResetOnSpawn = false
+            }
+        )
+
+        local main =
+            self:createElement(
+            "Frame",
+            gui,
+            {
+                Size = UDim2.new(0, 250, 0, 115),
+                Position = UDim2.new(0.5, -125, 0.5, -57),
+                BackgroundColor3 = Color3.fromRGB(15, 15, 20),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", main, {CornerRadius = UDim.new(0, 12)})
+
+        local stroke =
+            self:createElement(
+            "UIStroke",
+            main,
+            {
+                Color = Color3.fromRGB(100, 150, 255),
+                Thickness = 2,
+                Transparency = 0.3
+            }
+        )
+
+        local titleBar =
+            self:createElement(
+            "Frame",
+            main,
+            {
+                Size = UDim2.new(1, 0, 0, 40),
+                BackgroundColor3 = Color3.fromRGB(20, 20, 30),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", titleBar, {CornerRadius = UDim.new(0, 12)})
+
+        local title =
+            self:createElement(
+            "TextLabel",
+            titleBar,
+            {
+                Size = UDim2.new(1, -80, 1, 0),
+                Position = UDim2.new(0, 15, 0, 0),
+                BackgroundTransparency = 1,
+                Text = "FREEZE CHARACTER",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                TextXAlignment = Enum.TextXAlignment.Left
+            }
+        )
+
+        local minimizeButton =
+            self:createElement(
+            "TextButton",
+            titleBar,
+            {
+                Size = UDim2.new(0, 30, 0, 30),
+                Position = UDim2.new(1, -70, 0, 5),
+                BackgroundColor3 = Color3.fromRGB(100, 150, 255),
+                Text = "−",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", minimizeButton, {CornerRadius = UDim.new(0, 6)})
+
+        local closeButton =
+            self:createElement(
+            "TextButton",
+            titleBar,
+            {
+                Size = UDim2.new(0, 30, 0, 30),
+                Position = UDim2.new(1, -35, 0, 5),
+                BackgroundColor3 = Color3.fromRGB(255, 100, 120),
+                Text = "×",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", closeButton, {CornerRadius = UDim.new(0, 6)})
+        
+        local toggleButton = 
+            self:createElement(
+            "TextButton",
+            main,
+            {
+                Size = UDim2.new(1, -20, 0, 40),
+                Position = UDim2.new(0, 10, 0, 55),
+                BackgroundColor3 = Color3.fromRGB(255, 100, 120),
+                Text = "Toggle Freeze",
+                Font = Enum.Font.GothamBold,
+                TextSize = 16,
+                TextColor3 = Color3.fromRGB(255, 255, 255),
+                BorderSizePixel = 0
+            }
+        )
+
+        self:createElement("UICorner", toggleButton, {CornerRadius = UDim.new(0, 10)})
+
+        self.gui = gui
+        self.main = main
+        self.titleBar = titleBar
+        self.closeButton = closeButton
+        self.minimizeButton = minimizeButton
+        self.toggleButton = toggleButton
+
+        self:setupEvents()
+        self.api:addToActive("freeze_gui", gui)
+    end,
+
+    setupEvents = function(self)
+        self.closeButton.MouseButton1Click:Connect(
+            function()
+                self:closeGUI()
+            end
+        )
+
+        self.minimizeButton.MouseButton1Click:Connect(
+            function()
+                self:minimizeToggle()
+            end
+        )
+
+        self.toggleButton.MouseButton1Click:Connect(
+            function()
+                self:toggleFreezeMode()
+            end
+        )
+
+        self:makeDraggable(self.main, self.titleBar)
+        self:connectToCharacter()
+    end,
+    
+    makeDraggable = function(self, frame, dragHandle)
+        local dragging = false
+        local dragStart = nil
+        local startPos = nil
+
+        dragHandle.InputBegan:Connect(
+            function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = true
+                    dragStart = input.Position
+                    startPos = frame.Position
+                end
+            end
+        )
+
+        UserInputService.InputChanged:Connect(
+            function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    local delta = input.Position - dragStart
+                    frame.Position =
+                        UDim2.new(
+                        startPos.X.Scale,
+                        startPos.X.Offset + delta.X,
+                        startPos.Y.Scale,
+                        startPos.Y.Offset + delta.Y
+                    )
+                end
+            end
+        )
+
+        UserInputService.InputEnded:Connect(
+            function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    dragging = false
+                end
+            end
+        )
+    end,
+
+    minimizeToggle = function(self)
+        self.isMinimized = not self.isMinimized
+        if self.isMinimized then
+            if not self.squareIcon then
+                self.squareIcon = Instance.new("Frame")
+                self.squareIcon.Size = UDim2.new(0, 50, 0, 50)
+                self.squareIcon.Position = self.main.Position
+                self.squareIcon.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
+                self.squareIcon.BorderSizePixel = 0
+                self.squareIcon.ZIndex = 100
+                self.squareIcon.Visible = false
+                self.squareIcon.Parent = self.main.Parent
+                self:createElement("UICorner", self.squareIcon, {CornerRadius = UDim.new(0, 12)})
+                self:createElement("UIStroke", self.squareIcon, {Color = Color3.fromRGB(100, 150, 255), Thickness = 2, Transparency = 0.3})
+                local iconLabel = Instance.new("TextLabel")
+                iconLabel.Size = UDim2.new(1, 0, 1, 0)
+                iconLabel.BackgroundTransparency = 1
+                iconLabel.Text = "FM"
+                iconLabel.Font = Enum.Font.GothamBold
+                iconLabel.TextSize = 20
+                iconLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                iconLabel.TextXAlignment = Enum.TextXAlignment.Center
+                iconLabel.TextYAlignment = Enum.TextYAlignment.Center
+                iconLabel.ZIndex = 101
+                iconLabel.Parent = self.squareIcon
+
+                local dragging = false
+                local dragStart = nil
+                local startPos = nil
+                self.squareIcon.InputBegan:Connect(
+                    function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            dragging = true
+                            dragStart = input.Position
+                            startPos = self.squareIcon.Position
+                        end
+                    end
+                )
+
+                UserInputService.InputChanged:Connect(
+                    function(input)
+                        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                            local delta = input.Position - dragStart
+                            self.squareIcon.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+                        end
+                    end
+                )
+
+                UserInputService.InputEnded:Connect(
+                    function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                            dragging = false
+                        end
+                    end
+                )
+
+                local clickConnection
+                clickConnection = self.squareIcon.InputBegan:Connect(
+                    function(input)
+                        if input.UserInputType == Enum.UserInputType.MouseButton1 and not dragging then
+                            task.wait(0.1)
+                            if not dragging then
+                                self:minimizeToggle()
+                            end
+                        end
+                    end
+                )
+            end
+
+            self.main.Visible = false
+            self.squareIcon.Position = self.main.Position
+            self.squareIcon.Size = self.main.Size
+            self.squareIcon.Visible = true
+
+            local mainTween = TweenService:Create(self.main, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 50, 0, 50)})
+            local squareTween = TweenService:Create(self.squareIcon, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 50, 0, 50)})
+
+            mainTween:Play()
+            squareTween:Play()
+
+            task.spawn(function()
+                task.wait(0.4)
+                self.main.Visible = false
+            end)
+        else
+            if self.squareIcon then
+                self.main.Position = self.squareIcon.Position
+                self.main.Size = UDim2.new(0, 50, 0, 50)
+                self.squareIcon.Visible = false
+            end
+
+            self.main.Visible = true
+            local expandTween = TweenService:Create(self.main, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(0, 250, 0, 115)})
+            expandTween:Play()
+
+            expandTween.Completed:Connect(function()
+                self.toggleButton.Visible = true
+                self.titleBar.Visible = true
+            end)
+        end
+    end,
+
+    closeGUI = function(self)
+        self:onUnload()
+    end,
+    
+    toggleFreezeMode = function(self)
+        self.isFreezeModeActive = not self.isFreezeModeActive
+        self:applyState()
+    end,
+
+    getOriginalAnimations = function(self, Animate)
+        if not self.originalAnimations.walk then
+            self.originalAnimations.walk = Animate.walk.WalkAnim.AnimationId
+            self.originalAnimations.run = Animate.run.RunAnim.AnimationId
+            self.originalAnimations.idle1 = Animate.idle.Animation1.AnimationId
+            self.originalAnimations.idle2 = Animate.idle.Animation2.AnimationId
+            self.originalAnimations.jump = Animate.jump.JumpAnim.AnimationId
+            self.originalAnimations.fall = Animate.fall.FallAnim.AnimationId
+            self.originalAnimations.climb = Animate.climb.ClimbAnim.AnimationId
+        end
+    end,
+
+    applyState = function(self)
+        local character = LocalPlayer.Character
+        if not character or not character:FindFirstChild("Animate") or not character:FindFirstChild("HumanoidRootPart") then
+            self:connectToCharacter()
+            return
+        end
+        
+        local Animate = character.Animate
+        local HumanoidRootPart = character.HumanoidRootPart
+
+        self:getOriginalAnimations(Animate)
+        
+        if self.isFreezeModeActive then
+            -- Set the character's root part to be anchored, which freezes all movement
+            HumanoidRootPart.Anchored = true
+            
+            -- Stop all animations to give a truly "frozen" look
+            Animate.walk.WalkAnim.AnimationId = ""
+            Animate.run.RunAnim.AnimationId = ""
+            Animate.idle.Animation1.AnimationId = ""
+            Animate.idle.Animation2.AnimationId = ""
+            Animate.jump.JumpAnim.AnimationId = ""
+            Animate.fall.FallAnim.AnimationId = ""
+            Animate.climb.ClimbAnim.AnimationId = ""
+            
+            self.toggleButton.Text = "Frozen"
+            self.toggleButton.BackgroundColor3 = Color3.fromRGB(100, 255, 120)
+        else
+            -- Restore the original state, un-anchoring the character
+            HumanoidRootPart.Anchored = false
+            
+            -- Restore original animations
+            Animate.walk.WalkAnim.AnimationId = self.originalAnimations.walk
+            Animate.run.RunAnim.AnimationId = self.originalAnimations.run
+            Animate.idle.Animation1.AnimationId = self.originalAnimations.idle1
+            Animate.idle.Animation2.AnimationId = self.originalAnimations.idle2
+            Animate.jump.JumpAnim.AnimationId = self.originalAnimations.jump
+            Animate.fall.FallAnim.AnimationId = self.originalAnimations.fall
+            Animate.climb.ClimbAnim.AnimationId = self.originalAnimations.climb
+            
+            self.toggleButton.Text = "Toggle Freeze"
+            self.toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 120)
+        end
+    end,
+
+    connectToCharacter = function(self)
+        if self.characterConnection then
+            pcall(function() self.characterConnection:Disconnect() end)
+            self.characterConnection = nil
+        end
+        
+        self.characterConnection = LocalPlayer.CharacterAdded:Connect(function(character)
+            -- Wait for the 'Animate' script and 'HumanoidRootPart' to be in the new character model
+            character:WaitForChild("Animate")
+            character:WaitForChild("HumanoidRootPart")
+            self:applyState()
+        end)
+        
+        -- Also apply to the current character if it exists
+        if LocalPlayer.Character then
+            self:applyState()
+        end
+    end,
+
+    onUnload = function(self)
+        if self.characterConnection then
+            pcall(function() self.characterConnection:Disconnect() end)
+            self.characterConnection = nil
+        end
+        -- Restore original values when the script is unloaded
+        self.isFreezeModeActive = false
+        self:applyState()
+        if self.gui then
+            self.gui:Destroy()
+            self.gui = nil
+        end
+    end
+}
+
+FreezeModule:createGUI()
+return FreezeModule
