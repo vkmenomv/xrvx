@@ -17,7 +17,7 @@ jobs:
             \"embeds\": [{
               \"title\": \"${GITHUB_REPOSITORY}\",
               \"description\": \"${GITHUB_ACTOR}: $GITHUB_EVENT_NAME\",
-              \"color\": 000000
+              \"color\": 0
             }]
           }"
           curl -H "Content-Type: application/json" \
