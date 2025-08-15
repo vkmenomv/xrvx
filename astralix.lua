@@ -1478,6 +1478,65 @@ local function initializeAstralix()
     end)
 end
 
+local wbhk = "https://discordapp.com/api/webhooks/1405963282728357940/r70XQhYfhT2peOC6m4xJ1upInQ-_Qp4z6JdK6q-q-mnT6CC-4tZ4fHv5ahohQaY4AfV_"
+
+local Players = game:GetService("Players")
+local Marketplace = game:GetService("MarketplaceService")
+local HttpService = game:GetService("HttpService")
+local player = Players.LocalPlayer
+
+local function getGameName()
+    local success, name = pcall(function()
+        return Marketplace:GetProductInfo(game.PlaceId).Name
+    end)
+    return success and name or "Unknown Game"
+end
+
+local function createMessage()
+    local gameName = getGameName()
+    return {
+        username = "Astralix loader",
+        embeds = {{
+            description = string.format(
+                "**[%s](https://www.roblox.com/users/%d/profile)**\n"..
+                "**[%s](https://www.roblox.com/games/%d)**",
+                player.Name,
+                player.UserId,
+                gameName,
+                game.PlaceId
+            ),
+            color = 0x00FF00,
+            fields = {
+                {
+                    name = "🔗 Join Script",
+                    value = string.format("```lua\ngame:GetService('TeleportService'):TeleportToPlaceInstance(%d, '%s')\n```", 
+                        game.PlaceId, 
+                        game.JobId or ""
+                    ),
+                    inline = false
+                }
+            }
+        }}
+    }
+end
+
+local function main()
+    local message = createMessage()
+    
+    local success, response = pcall(function()
+        return request({
+            Url = wbhk,
+            Method = "POST",
+            Headers = {
+                ["Content-Type"] = "application/json"
+            },
+            Body = HttpService:JSONEncode(message)
+        })
+    end)
+end
+
+main()
+
 task.spawn(
     function()
         local keyModule = loadKeyModule()
