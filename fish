@@ -140,7 +140,7 @@ local FishModule = {
             {
                 Size = UDim2.new(1, -20, 0, 40),
                 Position = UDim2.new(0, 10, 0, 55),
-                BackgroundColor3 = Color3.fromRGB(255, 100, 120),
+                BackgroundColor3 = Color3.fromRGB(100, 150, 255),
                 Text = "Toggle Fish Mode",
                 Font = Enum.Font.GothamBold,
                 TextSize = 16,
