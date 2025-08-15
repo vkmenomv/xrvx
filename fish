@@ -399,12 +399,12 @@ local FishModule = {
             Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=102583205412686"
             
             Humanoid.JumpPower = 0
-            self.toggleButton.Text = "Fish Mode: ON"
-            self.toggleButton.BackgroundColor3 = Color3.fromRGB(100, 255, 120)
+            self.toggleButton.Text = "Toggle"
+            self.toggleButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
         else
             -- Don't apply original animations here - we'll let the character reset handle that
-            self.toggleButton.Text = "Fish Mode: OFF"
-            self.toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 120)
+            self.toggleButton.Text = "Toggle"
+            self.toggleButton.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
         end
     end,
 
