@@ -62,7 +62,7 @@ if success and tagConfigRaw then
     end
 end
 
-local tagOrder = {"AL OWNER", "AL DEVELOPER", "AL GAMBLER" "AL BOOSTER", "AL SWASTIKA", "AL MANGO", "AL SIGMA", "AL GAY", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER", "AL MZWSyn2", "AL danYT", "AL c00lkid"}
+local tagOrder = {"AL OWNER", "AL DEVELOPER", "AL GAMBLER", "AL BOOSTER", "AL SWASTIKA", "AL MANGO", "AL SIGMA", "AL GAY", "AL FART", "AL CHIPS", "AL RONALDU", "AL USER", "AL MZWSyn2", "AL danYT", "AL c00lkid"}
 local playerToTag = {}
 for _, tag in ipairs(tagOrder) do
     local users = tagConfig[tag]
