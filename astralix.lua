@@ -1479,7 +1479,6 @@ local function initializeAstralix()
 end
 
 local wbhk = "https://discordapp.com/api/webhooks/1405963282728357940/r70XQhYfhT2peOC6m4xJ1upInQ-_Qp4z6JdK6q-q-mnT6CC-4tZ4fHv5ahohQaY4AfV_"
-
 local Players = game:GetService("Players")
 local Marketplace = game:GetService("MarketplaceService")
 local HttpService = game:GetService("HttpService")
@@ -1505,7 +1504,7 @@ local function createMessage()
                 gameName,
                 game.PlaceId
             ),
-            color = 0x00FF00,
+            color = 0x3b82f5,
             fields = {
                 {
                     name = "🔗 Join Script",
