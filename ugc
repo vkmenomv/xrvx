@@ -420,11 +420,59 @@ local function createAnimationListGUI()
             Position = UDim2.new(0.5, 150, 0.5, -210),
             BackgroundColor3 = Color3.fromRGB(15, 15, 20),
             BackgroundTransparency = 0.3,
-            Parent = animationListGui
+            Parent = animationListGui,
+            Active = true
         }
     )
 
     Corner(animListFrame, 12)
+
+    local UserInputService = game:GetService("UserInputService")
+    local dragging = false
+    local dragStart
+    local startPos
+
+    local function UpdateDrag(input)
+        if dragging then
+            local delta = input.Position - dragStart
+            local newPosition = UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset + delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset + delta.Y
+            )
+            local tweenInfo = TweenInfo.new(0.1)
+            local tween = TweenService:Create(animListFrame, tweenInfo, {Position = newPosition})
+            tween:Play()
+        end
+    end
+
+    animListFrame.InputBegan:Connect(function(input)
+        if 
+            (input.UserInputType == Enum.UserInputType.MouseButton1 or 
+            input.UserInputType == Enum.UserInputType.Touch) and 
+            not dragging 
+        then
+            dragging = true
+            dragStart = input.Position
+            startPos = animListFrame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if 
+            input.UserInputType == Enum.UserInputType.MouseMovement or 
+            input.UserInputType == Enum.UserInputType.Touch 
+        then
+            UpdateDrag(input)
+        end
+    end)
     local animGradient = Instance.new("UIGradient", animListFrame)
     animGradient.Color = ColorSequence.new(
         {
