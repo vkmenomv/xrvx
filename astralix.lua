@@ -120,7 +120,7 @@ local SYSTEM = {
     ["KEY"] = getKEY(),
     ["ICON_URL"] = "https://github.com/thenomvi/astralix/blob/main/astralix.png?raw=true",
     ["ICON_PATH"] = "ASTRALIX/icon.png",
-    ["UPD_URL"] = "https://raw.githubusercontent.com/vkmenomv/astralix/main/loader",
+    ["UPD_URL"] = "https://raw.githubusercontent.com/vkmenomv/xrvx/refs/heads/main/astralix.lua",
     ["CMDLIST_URL"] = "https://raw.githubusercontent.com/vkmenomv/xrvx/main/cmdlist.json",
     ["INTERVAL"] = 15
 }
