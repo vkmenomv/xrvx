@@ -332,7 +332,32 @@ local FishModule = {
     
     toggleFishMode = function(self)
         self.isFishModeActive = not self.isFishModeActive
-        self:applyAnimations()
+        
+        if self.isFishModeActive then
+            self:applyAnimations()
+        else
+            -- Reset character when turning off fish mode
+            local character = LocalPlayer.Character
+            if character then
+                local humanoidRootPart = character:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart then
+                    local position = humanoidRootPart.Position
+                    local cframe = humanoidRootPart.CFrame
+                    
+                    -- Respawn the character
+                    LocalPlayer.Character:BreakJoints()
+                    
+                    -- Wait for the new character to load
+                    local newCharacter = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+                    newCharacter:WaitForChild("HumanoidRootPart")
+                    
+                    -- Teleport the new character to the same position
+                    task.wait(0.1) -- Small delay to ensure everything is loaded
+                    newCharacter:MoveTo(position)
+                    newCharacter:SetPrimaryPartCFrame(cframe)
+                end
+            end
+        end
     end,
 
     getOriginalAnimations = function(self, Animate, Humanoid)
@@ -346,7 +371,7 @@ local FishModule = {
             self.originalAnimations.climb = Animate.climb.ClimbAnim.AnimationId
         end
         if self.originalJumpPower == nil then
-            self.originalJumpPower = Humanoid.Jump
+            self.originalJumpPower = Humanoid.JumpPower
         end
     end,
 
@@ -373,20 +398,11 @@ local FishModule = {
             Animate.fall.FallAnim.AnimationId = "http://www.roblox.com/asset/?id=102583205412686"
             Animate.climb.ClimbAnim.AnimationId = "http://www.roblox.com/asset/?id=102583205412686"
             
-            Humanoid.Jump = false
+            Humanoid.JumpPower = 0
             self.toggleButton.Text = "Fish Mode: ON"
             self.toggleButton.BackgroundColor3 = Color3.fromRGB(100, 255, 120)
         else
-            -- Apply original animations
-            Animate.walk.WalkAnim.AnimationId = self.originalAnimations.walk
-            Animate.run.RunAnim.AnimationId = self.originalAnimations.run
-            Animate.idle.Animation1.AnimationId = self.originalAnimations.idle1
-            Animate.idle.Animation2.AnimationId = self.originalAnimations.idle2
-            Animate.jump.JumpAnim.AnimationId = self.originalAnimations.jump
-            Animate.fall.FallAnim.AnimationId = self.originalAnimations.fall
-            Animate.climb.ClimbAnim.AnimationId = self.originalAnimations.climb
-            
-            Humanoid.Jump = self.originalJumpPower
+            -- Don't apply original animations here - we'll let the character reset handle that
             self.toggleButton.Text = "Fish Mode: OFF"
             self.toggleButton.BackgroundColor3 = Color3.fromRGB(255, 100, 120)
         end
@@ -401,11 +417,13 @@ local FishModule = {
         self.characterConnection = LocalPlayer.CharacterAdded:Connect(function(character)
             -- Wait for the 'Animate' script to be in the new character model
             character:WaitForChild("Animate")
-            self:applyAnimations()
+            if self.isFishModeActive then
+                self:applyAnimations()
+            end
         end)
         
         -- Also apply to the current character if it exists
-        if LocalPlayer.Character then
+        if LocalPlayer.Character and self.isFishModeActive then
             self:applyAnimations()
         end
     end,
@@ -416,8 +434,12 @@ local FishModule = {
             self.characterConnection = nil
         end
         -- Reset animations to default when the script is unloaded
-        self.isFishModeActive = false
-        self:applyAnimations()
+        if self.isFishModeActive then
+            local character = LocalPlayer.Character
+            if character then
+                character:BreakJoints()
+            end
+        end
         if self.gui then
             self.gui:Destroy()
             self.gui = nil
