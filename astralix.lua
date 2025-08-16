@@ -8,7 +8,16 @@ local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 local Player = Players.LocalPlayer
 local env = getgenv()
-if env.ASTRALIX_CLEANUP then env.ASTRALIX_CLEANUP()end
+
+-- Settings System
+local DEFAULT_SETTINGS = {
+    openKey = Enum.KeyCode.F5,
+    -- Add more default settings here as needed
+}
+
+local SETTINGS = table.clone(DEFAULT_SETTINGS)
+
+if env.ASTRALIX_CLEANUP then env.ASTRALIX_CLEANUP() end
 env.ASTRALIX_ACTIVE = env.ASTRALIX_ACTIVE or {}
 env.ASTRALIX_MODULES = env.ASTRALIX_MODULES or {}
 local noclipConnection = nil
@@ -32,9 +41,13 @@ end
 local AstralixAPI = {}
 AstralixAPI.__index = AstralixAPI
 
+local function getCleanKeyName(keyCode)
+    return tostring(keyCode):gsub("Enum.KeyCode.", "")
+end
+
 function AstralixAPI.new()
     local self = setmetatable({}, AstralixAPI)
-    self.author = "nomvi"
+    self.author = "nomvi, adrianek"
     return self
 end
 
@@ -56,11 +69,9 @@ end
 function AstralixAPI:createElement(elementType, properties)
     local element = Instance.new(elementType)
     for prop, value in pairs(properties or {}) do
-        pcall(
-            function()
-                element[prop] = value
-            end
-        )
+        pcall(function()
+            element[prop] = value
+        end)
     end
     return element
 end
@@ -187,11 +198,9 @@ end
 local function createElement(elementType, properties)
     local element = Instance.new(elementType)
     for prop, value in pairs(properties or {}) do
-        pcall(
-            function()
-                element[prop] = value
-            end
-        )
+        pcall(function()
+            element[prop] = value
+        end)
     end
     return element
 end
@@ -350,8 +359,7 @@ function SendNotify:show(title, text, duration, notifType)
     local color = colors[notifType or "info"] or colors.info
     duration = duration or 5
 
-    local notification =
-        createElement(
+    local notification = createElement(
         "Frame",
         {
             Name = "Notification",
@@ -431,8 +439,7 @@ function SendNotify:show(title, text, duration, notifType)
         }
     )
 
-    local closeButton =
-        createElement(
+    local closeButton = createElement(
         "TextButton",
         {
             Size = UDim2.new(0, 24, 0, 24),
@@ -449,8 +456,7 @@ function SendNotify:show(title, text, duration, notifType)
     )
     addCorner(closeButton, 6)
 
-    local progressContainer =
-        createElement(
+    local progressContainer = createElement(
         "Frame",
         {
             Size = UDim2.new(1, -12, 0, 2),
@@ -463,8 +469,7 @@ function SendNotify:show(title, text, duration, notifType)
     )
     addCorner(progressContainer, 1)
 
-    local progressBar =
-        createElement(
+    local progressBar = createElement(
         "Frame",
         {
             Size = UDim2.new(1, 0, 1, 0),
@@ -492,18 +497,16 @@ function SendNotify:show(title, text, duration, notifType)
         if stroke then
             TweenService:Create(stroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
         end
-        task.spawn(
-            function()
-                task.wait(0.3)
-                notification:Destroy()
-                for i, notif in pairs(self.notifications) do
-                    if notif == notification then
-                        table.remove(self.notifications, i)
-                        break
-                    end
+        task.spawn(function()
+            task.wait(0.3)
+            notification:Destroy()
+            for i, notif in pairs(self.notifications) do
+                if notif == notification then
+                    table.remove(self.notifications, i)
+                    break
                 end
             end
-        )
+        end)
     end
 
     closeButton.MouseButton1Click:Connect(closeNotification)
@@ -515,22 +518,17 @@ function SendNotify:show(title, text, duration, notifType)
             BackgroundTransparency = 0.1
         }
     ):Play()
-    TweenService:Create(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play(
-
-    )
-    task.spawn(
-        function()
-            task.wait(duration)
-            if notification and notification.Parent then
-                closeNotification()
-            end
+    TweenService:Create(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {Size = UDim2.new(0, 0, 1, 0)}):Play()
+    task.spawn(function()
+        task.wait(duration)
+        if notification and notification.Parent then
+            closeNotification()
         end
-    )
+    end)
 end
 
 function astralix:createSquareButton()
-    local squareButton =
-        createElement(
+    local squareButton = createElement(
         "TextButton",
         {
             Name = "SquareButton",
@@ -547,8 +545,7 @@ function astralix:createSquareButton()
     )
     addCorner(squareButton, 12)
 
-    local squareIcon =
-        createElement(
+    local squareIcon = createElement(
         "ImageLabel",
         {
             Size = UDim2.new(0.8, 0, 0.8, 0),
@@ -560,8 +557,7 @@ function astralix:createSquareButton()
         }
     )
 
-    local fallbackText =
-        createElement(
+    local fallbackText = createElement(
         "TextLabel",
         {
             Size = UDim2.new(1, 0, 1, 0),
@@ -576,134 +572,112 @@ function astralix:createSquareButton()
         }
     )
 
-    task.spawn(
-        function()
-            local function tryLoadImage()
-                if isfile and isfile(SYSTEM.ICON_PATH) then
-                    local imageSet = false
-                    if getcustomasset then
-                        local success =
-                            pcall(
-                            function()
-                                squareIcon.Image = getcustomasset(SYSTEM.ICON_PATH)
-                                imageSet = true
-                                fallbackText.Visible = false
-                                squareIcon.ImageTransparency = 0
-                            end
-                        )
-                        if not success then
-                            warn("[ASTRALIX] Failed to load asset")
-                        end
+    task.spawn(function()
+        local function tryLoadImage()
+            if isfile and isfile(SYSTEM.ICON_PATH) then
+                local imageSet = false
+                if getcustomasset then
+                    local success = pcall(function()
+                        squareIcon.Image = getcustomasset(SYSTEM.ICON_PATH)
+                        imageSet = true
+                        fallbackText.Visible = false
+                        squareIcon.ImageTransparency = 0
+                    end)
+                    if not success then
+                        warn("[ASTRALIX] Failed to load asset")
                     end
-                    if not imageSet and getsynasset then
-                        local success =
-                            pcall(
-                            function()
-                                squareIcon.Image = getsynasset(SYSTEM.ICON_PATH)
-                                imageSet = true
-                                fallbackText.Visible = false
-                                squareIcon.ImageTransparency = 0
-                            end
-                        )
-                        if not success then
-                            warn("[ASTRALIX] Failed to load asset")
-                        end
-                    end
-                    return imageSet
                 end
-                return false
+                if not imageSet and getsynasset then
+                    local success = pcall(function()
+                        squareIcon.Image = getsynasset(SYSTEM.ICON_PATH)
+                        imageSet = true
+                        fallbackText.Visible = false
+                        squareIcon.ImageTransparency = 0
+                    end)
+                    if not success then
+                        warn("[ASTRALIX] Failed to load asset")
+                    end
+                end
+                return imageSet
             end
+            return false
+        end
 
-            fallbackText.Visible = true
-            squareIcon.ImageTransparency = 1
-            local imageLoaded = tryLoadImage()
-            if not imageLoaded then
-                local success, imageData =
-                    pcall(
-                    function()
-                        return game:HttpGet(SYSTEM.ICON_URL)
+        fallbackText.Visible = true
+        squareIcon.ImageTransparency = 1
+        local imageLoaded = tryLoadImage()
+        if not imageLoaded then
+            local success, imageData = pcall(function()
+                return game:HttpGet(SYSTEM.ICON_URL)
+            end)
+            if success and imageData and type(imageData) == "string" and #imageData > 100 then
+                local saveSuccess = pcall(function()
+                    if not isfolder("ASTRALIX") then
+                        makefolder("ASTRALIX")
                     end
-                )
-                if success and imageData and type(imageData) == "string" and #imageData > 100 then
-                    local saveSuccess =
-                        pcall(
-                        function()
-                            if not isfolder("ASTRALIX") then
-                                makefolder("ASTRALIX")
-                            end
-                            writefile(SYSTEM.ICON_PATH, imageData)
-                        end
-                    )
+                    writefile(SYSTEM.ICON_PATH, imageData)
+                end)
 
-                    if saveSuccess then
-                        task.wait(0.1)
-                        imageLoaded = tryLoadImage()
-                    else
-                        warn("[ASTRALIX] Failed to save icon")
-                    end
+                if saveSuccess then
+                    task.wait(0.1)
+                    imageLoaded = tryLoadImage()
                 else
-                    warn("[ASTRALIX] Failed to set icon")
+                    warn("[ASTRALIX] Failed to save icon")
                 end
-            end
-
-            if imageLoaded then
-                TweenService:Create(fallbackText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-                TweenService:Create(squareIcon, TweenInfo.new(0.3), {ImageTransparency = 0}):Play()
-                task.wait(0.3)
-                fallbackText.Visible = false
             else
-                fallbackText.Visible = true
-                fallbackText.Text = "A"
-                print("ASTRALIX: Using fallback text")
+                warn("[ASTRALIX] Failed to set icon")
             end
         end
-    )
+
+        if imageLoaded then
+            TweenService:Create(fallbackText, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(squareIcon, TweenInfo.new(0.3), {ImageTransparency = 0}):Play()
+            task.wait(0.3)
+            fallbackText.Visible = false
+        else
+            fallbackText.Visible = true
+            fallbackText.Text = "A"
+            print("ASTRALIX: Using fallback text")
+        end
+    end)
 
     local dragging, dragStart, startPos, isDragThresholdMet = false, nil, nil, false
 
-    squareButton.InputBegan:Connect(
-        function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragStart, startPos, isDragThresholdMet, dragging = input.Position, squareButton.Position, false, true
-            end
+    squareButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragStart, startPos, isDragThresholdMet, dragging = input.Position, squareButton.Position, false, true
         end
-    )
+    end)
 
-    UserInputService.InputChanged:Connect(
-        function(input)
-            if dragging and dragStart and input.UserInputType == Enum.UserInputType.MouseMovement then
-                local delta = input.Position - dragStart
-                if math.sqrt(delta.X ^ 2 + delta.Y ^ 2) > 5 then
-                    isDragThresholdMet = true
-                end
-                if isDragThresholdMet then
-                    local newPos =
-                        UDim2.new(
-                        startPos.X.Scale,
-                        startPos.X.Offset + delta.X,
-                        startPos.Y.Scale,
-                        startPos.Y.Offset + delta.Y
-                    )
-                    squareButton.Position = newPos
-                    self.squarePosition = newPos
-                end
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and dragStart and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            if math.sqrt(delta.X ^ 2 + delta.Y ^ 2) > 5 then
+                isDragThresholdMet = true
+            end
+            if isDragThresholdMet then
+                local newPos = UDim2.new(
+                    startPos.X.Scale,
+                    startPos.X.Offset + delta.X,
+                    startPos.Y.Scale,
+                    startPos.Y.Offset + delta.Y
+                )
+                squareButton.Position = newPos
+                self.squarePosition = newPos
             end
         end
-    )
+    end)
 
-    UserInputService.InputEnded:Connect(
-        function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                dragging, isDragThresholdMet = false, false
-            end
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging, isDragThresholdMet = false, false
         end
-    )
+    end)
     return squareButton
 end
 
 function astralix:createWatermark()
-    local watermarkFrame =
-        createElement(
+    local watermarkFrame = createElement(
         "Frame",
         {
             Name = "WatermarkFrame",
@@ -729,8 +703,7 @@ function astralix:createWatermark()
         500
     )
 
-    local greenCircle =
-        createElement(
+    local greenCircle = createElement(
         "Frame",
         {
             Size = UDim2.new(0, 8, 0, 8),
@@ -743,8 +716,7 @@ function astralix:createWatermark()
     )
     addCorner(greenCircle, 4)
 
-    local titleLabel =
-        createElement(
+    local titleLabel = createElement(
         "TextLabel",
         {
             Size = UDim2.new(0, 80, 0, 15),
@@ -770,8 +742,7 @@ function astralix:createWatermark()
         0
     )
 
-    local fpsLabel =
-        createElement(
+    local fpsLabel = createElement(
         "TextLabel",
         {
             Size = UDim2.new(0, 80, 0, 12),
@@ -795,53 +766,46 @@ function astralix:createWatermark()
         }
     ):Play()
 
-    task.spawn(
-        function()
-            local frameCount = 0
-            local lastTime = tick()
+    task.spawn(function()
+        local frameCount = 0
+        local lastTime = tick()
 
-            while watermarkFrame.Parent do
-                RunService.Heartbeat:Wait()
-                frameCount = frameCount + 1
+        while watermarkFrame.Parent do
+            RunService.Heartbeat:Wait()
+            frameCount = frameCount + 1
 
-                local currentTime = tick()
-                if currentTime - lastTime >= 1 then
-                    local fps = math.floor(frameCount / (currentTime - lastTime))
-                    fpsLabel.Text = "FPS: " .. fps
-                    frameCount = 0
-                    lastTime = currentTime
-                end
+            local currentTime = tick()
+            if currentTime - lastTime >= 1 then
+                local fps = math.floor(frameCount / (currentTime - lastTime))
+                fpsLabel.Text = "FPS: " .. fps
+                frameCount = 0
+                lastTime = currentTime
             end
         end
-    )
+    end)
 
-    task.spawn(
-        function()
-            while watermarkFrame.Parent do
-                local pulseTween1 =
-                    TweenService:Create(
-                    greenCircle,
-                    TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                    {BackgroundColor3 = Color3.fromRGB(0, 200, 0)}
-                )
-                local pulseTween2 =
-                    TweenService:Create(
-                    greenCircle,
-                    TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-                    {BackgroundColor3 = Color3.fromRGB(0, 255, 0)}
-                )
-                pulseTween1:Play()
-                pulseTween1.Completed:Wait()
-                pulseTween2:Play()
-                pulseTween2.Completed:Wait()
-            end
+    task.spawn(function()
+        while watermarkFrame.Parent do
+            local pulseTween1 = TweenService:Create(
+                greenCircle,
+                TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {BackgroundColor3 = Color3.fromRGB(0, 200, 0)}
+            )
+            local pulseTween2 = TweenService:Create(
+                greenCircle,
+                TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+                {BackgroundColor3 = Color3.fromRGB(0, 255, 0)}
+            )
+            pulseTween1:Play()
+            pulseTween1.Completed:Wait()
+            pulseTween2:Play()
+            pulseTween2.Completed:Wait()
         end
-    )
+    end)
 end
 
 function astralix:createCommandInterface()
-    local commandFrame =
-        createElement(
+    local commandFrame = createElement(
         "Frame",
         {
             Name = "CommandFrame",
@@ -866,8 +830,7 @@ function astralix:createCommandInterface()
         90
     )
 
-    local promptIcon =
-        createElement(
+    local promptIcon = createElement(
         "TextLabel",
         {
             Size = UDim2.new(0, 30, 1, 0),
@@ -884,8 +847,7 @@ function astralix:createCommandInterface()
         }
     )
 
-    local commandInput =
-        createElement(
+    local commandInput = createElement(
         "TextBox",
         {
             Size = UDim2.new(1, -55, 1, -20),
@@ -905,8 +867,7 @@ function astralix:createCommandInterface()
         }
     )
 
-    local commandSuggestion =
-        createElement(
+    local commandSuggestion = createElement(
         "TextLabel",
         {
             Size = UDim2.new(1, -55, 1, -20),
@@ -923,33 +884,25 @@ function astralix:createCommandInterface()
         }
     )
 
-    commandInput.FocusLost:Connect(
-        function(enterPressed)
-            if enterPressed and commandInput.Text ~= "" then
-                self.moduleExecute:execute(commandInput.Text)
-                commandInput.Text = ""
-                task.spawn(
-                    function()
-                        self:animateClose()
-                    end
-                )
-            elseif not enterPressed then
-                task.spawn(
-                    function()
-                        self:animateClose()
-                    end
-                )
-            end
+    commandInput.FocusLost:Connect(function(enterPressed)
+        if enterPressed and commandInput.Text ~= "" then
+            self.moduleExecute:execute(commandInput.Text)
+            commandInput.Text = ""
+            task.spawn(function()
+                self:animateClose()
+            end)
+        elseif not enterPressed then
+            task.spawn(function()
+                self:animateClose()
+            end)
         end
-    )
+    end)
 
-    commandInput:GetPropertyChangedSignal("Text"):Connect(
-        function()
-            if self.isOpen and commandInput:IsFocused() then
-                self.autoComplete:updateSuggestion(commandInput, commandSuggestion, commandInput.Text)
-            end
+    commandInput:GetPropertyChangedSignal("Text"):Connect(function()
+        if self.isOpen and commandInput:IsFocused() then
+            self.autoComplete:updateSuggestion(commandInput, commandSuggestion, commandInput.Text)
         end
-    )
+    end)
 
     return commandFrame, commandInput, commandSuggestion, promptIcon
 end
@@ -1115,15 +1068,13 @@ function astralix:animateClose()
 end
 
 function astralix:gui()
-    local screenGui =
-        createElement(
+    local screenGui = createElement(
         "ScreenGui",
         {
             Name = "ASTRALIX",
             ResetOnSpawn = false,
             ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-            Parent = (syn and syn.protect_gui and game:GetService("CoreGui")) or (gethui and gethui()) or
-                Player.PlayerGui
+            Parent = (syn and syn.protect_gui and game:GetService("CoreGui")) or (gethui and gethui()) or Player.PlayerGui
         }
     )
 
@@ -1133,8 +1084,7 @@ function astralix:gui()
 
     self.gui = screenGui
 
-    local NotifyContainer =
-        createElement(
+    local NotifyContainer = createElement(
         "Frame",
         {
             Name = "NotifyContainer",
@@ -1161,6 +1111,36 @@ function astralix:gui()
     self.autoComplete = autoComplete.new(self.moduleExecute)
     env.API:init(self)
 
+    -- Keybind Command
+    self.moduleExecute:register(
+    "keybind",
+    function(args)
+        if not args[1] then
+            self.SendNotify:show(
+                "ASTRALIX", 
+                "Current keybind: "..getCleanKeyName(SETTINGS.openKey).."\nUsage: keybind <key>", 
+                5, 
+                "info"
+            )
+            return
+        end
+        
+        local newKey = Enum.KeyCode[args[1]:upper()]
+        if not newKey then
+            self.SendNotify:show("ASTRALIX", "Invalid key: "..args[1], 5, "error")
+            return
+        end
+        
+        SETTINGS.openKey = newKey
+        self.SendNotify:show(
+            "ASTRALIX", 
+            "Keybind set to: "..getCleanKeyName(newKey), 
+            5, 
+            "success"
+        )
+    end
+)
+
     task.spawn(function()
         local commandList = loadCommandList()
         
@@ -1169,11 +1149,9 @@ function astralix:gui()
                 commandName,
                 function(args)
                     if commandName == "twistie" then
-                        coroutine.wrap(
-                            function()
-                                loadstring(game:HttpGet(commandUrl))()
-                            end
-                        )()
+                        coroutine.wrap(function()
+                            loadstring(game:HttpGet(commandUrl))()
+                        end)()
                     elseif commandName == "cb" then
                         if game.PlaceId ~= 301549746 and game.PlaceId ~= 286090429 then
                             self.SendNotify:show("ASTRALIX", "Works only in Counter Blox & Arsenal", 5, "error")
@@ -1261,18 +1239,15 @@ function astralix:gui()
                 end
                 self.SendNotify:show("ASTRALIX", "Noclip disabled", 3, "info")
             else
-                noclipConnection =
-                    RunService.Heartbeat:Connect(
-                    function()
-                        if Player.Character then
-                            for _, part in pairs(Player.Character:GetDescendants()) do
-                                if part:IsA("BasePart") and part.CanCollide then
-                                    part.CanCollide = false
-                                end
+                noclipConnection = RunService.Heartbeat:Connect(function()
+                    if Player.Character then
+                        for _, part in pairs(Player.Character:GetDescendants()) do
+                            if part:IsA("BasePart") and part.CanCollide then
+                                part.CanCollide = false
                             end
                         end
                     end
-                )
+                end)
                 self.SendNotify:show("ASTRALIX", "Noclip enabled", 3, "success")
             end
         end
@@ -1323,83 +1298,75 @@ function astralix:gui()
             end
         end
     )
+
     self:createWatermark()
     local squareButton = self:createSquareButton()
     self:createCommandInterface()
+
     if UserInputService.TouchEnabled then
-        squareButton.MouseButton1Click:Connect(
-            function()
-                task.spawn(
-                    function()
-                        if self.isOpen then
-                            self:animateClose()
-                        else
-                            self:animateOpen()
-                        end
-                    end
-                )
-            end
-        )
+        squareButton.MouseButton1Click:Connect(function()
+            task.spawn(function()
+                if self.isOpen then
+                    self:animateClose()
+                else
+                    self:animateOpen()
+                end
+            end)
+        end)
     end
-    UserInputService.InputBegan:Connect(
-        function(input, gameProcessed)
-            if gameProcessed then
-                return
-            end
-            if UserInputService.KeyboardEnabled then
-                if input.KeyCode == Enum.KeyCode.F5 then
-                    if self.isOpen then
-                        task.spawn(
-                            function()
-                                self:animateClose()
-                            end
-                        )
-                    else
-                        task.spawn(
-                            function()
-                                self:animateOpen()
-                            end
-                        )
-                    end
+
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if gameProcessed then
+            return
+        end
+        if UserInputService.KeyboardEnabled then
+            if input.KeyCode == SETTINGS.openKey then
+                if self.isOpen then
+                    task.spawn(function()
+                        self:animateClose()
+                    end)
+                else
+                    task.spawn(function()
+                        self:animateOpen()
+                    end)
                 end
             end
-            if self.isOpen then
-                local commandFrame = self.gui:FindFirstChild("CommandFrame")
-                if commandFrame then
-                    local commandInput = commandFrame:FindFirstChild("TextBox")
-                    if commandInput and input.KeyCode == Enum.KeyCode.Tab and commandInput:IsFocused() then
-                        if self.autoComplete:applySuggestion(commandInput) then
-                            commandInput:CaptureFocus()
-                            task.wait(0.1)
-                            commandInput.CursorPosition = #commandInput.Text + 1
-                        end
+        end
+        if self.isOpen then
+            local commandFrame = self.gui:FindFirstChild("CommandFrame")
+            if commandFrame then
+                local commandInput = commandFrame:FindFirstChild("TextBox")
+                if commandInput and input.KeyCode == Enum.KeyCode.Tab and commandInput:IsFocused() then
+                    if self.autoComplete:applySuggestion(commandInput) then
+                        commandInput:CaptureFocus()
+                        task.wait(0.1)
+                        commandInput.CursorPosition = #commandInput.Text + 1
                     end
                 end
             end
         end
-    )
+    end)
+
     env.ASTRALIX_ACTIVE["main_gui"] = {screenGui}
     startUpdateChecker(self.SendNotify)
-    task.spawn(
-        function()
-            task.wait(0.5)
-            if UserInputService.TouchEnabled then
-                self.SendNotify:show(
-                    "ASTRALIX",
-                    "Tap the square button to open command bar\nType help for available commands",
-                    5,
-                    "info"
-                )
-            else
-                self.SendNotify:show(
-                    "ASTRALIX",
-                    "Press F5 to open command bar\nType help for available commands",
-                    5,
-                    "info"
-                )
-            end
-        end
-    )
+    task.spawn(function()
+    task.wait(0.5)
+    if UserInputService.TouchEnabled then
+        self.SendNotify:show(
+            "ASTRALIX",
+            "Tap the square button to open command bar",
+            5,
+            "info"
+        )
+    else
+        self.SendNotify:show(
+            "ASTRALIX",
+            "Press "..getCleanKeyName(SETTINGS.openKey).." to open command bar\nType 'help' for commands",
+            5,
+            "info"
+        )
+    end
+end)
     return astralix
 end
 
@@ -1409,15 +1376,13 @@ env.ASTRALIX_CLEANUP = function()
         for componentName, componentData in pairs(env.ASTRALIX_ACTIVE) do
             if type(componentData) == "table" then
                 for _, obj in pairs(componentData) do
-                    pcall(
-                        function()
-                            if typeof(obj) == "RBXScriptConnection" then
-                                obj:Disconnect()
-                            elseif typeof(obj) == "Instance" then
-                                obj:Destroy()
-                            end
+                    pcall(function()
+                        if typeof(obj) == "RBXScriptConnection" then
+                            obj:Disconnect()
+                        elseif typeof(obj) == "Instance" then
+                            obj:Destroy()
                         end
-                    )
+                    end)
                 end
             end
         end
@@ -1469,10 +1434,8 @@ end
 
 local function initializeAstralix()
     astralix:gui()
-    task.spawn(
-        function()
-        coroutine.wrap(
-            function()
+    task.spawn(function()
+        coroutine.wrap(function()
             loadstring(game:HttpGet("https://raw.githubusercontent.com/vkmenomv/xrvx/main/tags"))()
         end)()
     end)
@@ -1536,17 +1499,15 @@ end
 
 main()
 
-task.spawn(
-    function()
-        local keyModule = loadKeyModule()
-        if keyModule then
-            keyModule:authenticate(
-                SYSTEM.KEY,
-                function()
+task.spawn(function()
+    local keyModule = loadKeyModule()
+    if keyModule then
+        keyModule:authenticate(
+            SYSTEM.KEY,
+            function()
                 initializeAstralix()
             end)
-        else
-            initializeAstralix()
-        end
+    else
+        initializeAstralix()
     end
-)
+end)
