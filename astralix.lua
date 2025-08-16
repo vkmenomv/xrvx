@@ -1414,7 +1414,7 @@ end
 
 local function loadKeyModule()
     local success, keyModule = pcall(function()
-        return loadstring(game:HttpGet("https://raw.githubusercontent.com/vkmenomv/xrvx/main/key"))()
+        return loadstring(game:HttpGet("https://raw.githubusercontent.com/vkmenomv/xrvx/main/key.lua"))()
     end)
     return success and keyModule or nil
 end
@@ -1423,7 +1423,7 @@ local function initializeAstralix()
     astralix:gui()
     task.spawn(function()
         coroutine.wrap(function()
-            loadstring(game:HttpGet("https://raw.githubusercontent.com/vkmenomv/xrvx/main/tags"))()
+            loadstring(game:HttpGet("https://raw.githubusercontent.com/vkmenomv/xrvx/main/tags.lua"))()
         end)()
     end)
 end
