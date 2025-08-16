@@ -8,15 +8,6 @@ local RunService = game:GetService("RunService")
 local TextService = game:GetService("TextService")
 local Player = Players.LocalPlayer
 local env = getgenv()
-
--- Settings System
-local DEFAULT_SETTINGS = {
-    openKey = Enum.KeyCode.F5,
-    -- Add more default settings here as needed
-}
-
-local SETTINGS = table.clone(DEFAULT_SETTINGS)
-
 if env.ASTRALIX_CLEANUP then env.ASTRALIX_CLEANUP() end
 env.ASTRALIX_ACTIVE = env.ASTRALIX_ACTIVE or {}
 env.ASTRALIX_MODULES = env.ASTRALIX_MODULES or {}
@@ -133,7 +124,8 @@ local SYSTEM = {
     ["ICON_PATH"] = "ASTRALIX/icon.png",
     ["UPD_URL"] = "https://raw.githubusercontent.com/vkmenomv/xrvx/refs/heads/main/astralix.lua",
     ["CMDLIST_URL"] = "https://raw.githubusercontent.com/vkmenomv/xrvx/main/cmdlist.json",
-    ["INTERVAL"] = 15
+    ["INTERVAL"] = 15,
+    ["openKey"] = Enum.KeyCode.F5,
 }
 
 local function safeExecute(func, ...)
@@ -1110,40 +1102,35 @@ function astralix:gui()
     self.moduleExecute = moduleExecute.new(self.SendNotify)
     self.autoComplete = autoComplete.new(self.moduleExecute)
     env.API:init(self)
-
-    -- Keybind Command
     self.moduleExecute:register(
     "keybind",
     function(args)
         if not args[1] then
             self.SendNotify:show(
                 "ASTRALIX", 
-                "Current keybind: "..getCleanKeyName(SETTINGS.openKey).."\nUsage: keybind <key>", 
+                "Current keybind: "..getCleanKeyName(SYSTEM.openKey).."\nUsage: keybind <key>", 
                 5, 
                 "info"
             )
             return
         end
-        
         local newKey = Enum.KeyCode[args[1]:upper()]
         if not newKey then
             self.SendNotify:show("ASTRALIX", "Invalid key: "..args[1], 5, "error")
             return
         end
-        
-        SETTINGS.openKey = newKey
-        self.SendNotify:show(
-            "ASTRALIX", 
-            "Keybind set to: "..getCleanKeyName(newKey), 
-            5, 
-            "success"
-        )
-    end
-)
+        SYSTEM.openKey = newKey
+            self.SendNotify:show(
+                "ASTRALIX", 
+                "Keybind set to: "..getCleanKeyName(newKey), 
+                5, 
+                "success"
+            )
+        end
+    )
 
     task.spawn(function()
         local commandList = loadCommandList()
-        
         for commandName, commandUrl in pairs(commandList) do
             self.moduleExecute:register(
                 commandName,
@@ -1320,7 +1307,7 @@ function astralix:gui()
             return
         end
         if UserInputService.KeyboardEnabled then
-            if input.KeyCode == SETTINGS.openKey then
+            if input.KeyCode == SYSTEM.openKey then
                 if self.isOpen then
                     task.spawn(function()
                         self:animateClose()
@@ -1361,7 +1348,7 @@ function astralix:gui()
     else
         self.SendNotify:show(
             "ASTRALIX",
-            "Press "..getCleanKeyName(SETTINGS.openKey).." to open command bar\nType 'help' for commands",
+            "Press "..getCleanKeyName(SYSTEM.openKey).." to open command bar\nType 'help' for commands",
             5,
             "info"
         )
