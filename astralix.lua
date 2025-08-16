@@ -1210,7 +1210,6 @@ function astralix:gui()
             self.SendNotify:show("ASTRALIX", "Speed set to " .. speed, 3, "success")
         end
     )
-
     self.moduleExecute:register(
         "noclip",
         function(args)
@@ -1219,17 +1218,25 @@ function astralix:gui()
             end
             if noclipConnection then
                 noclipConnection:Disconnect()
-                for _, part in pairs(Player.Character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = true
+                noclipConnection = nil
+                
+                if Player.Character then
+                    for _, part in pairs(Player.Character:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = true
+                        end
                     end
                 end
+                
                 self.SendNotify:show("ASTRALIX", "Noclip disabled", 3, "info")
             else
-                noclipConnection = RunService.Heartbeat:Connect(function()
+                noclipConnection = RunService.Stepped:Connect(function()
                     if Player.Character then
+                        local humanoid = Player.Character:FindFirstChild("Humanoid")
+                        if not humanoid then return end
+                        
                         for _, part in pairs(Player.Character:GetDescendants()) do
-                            if part:IsA("BasePart") and part.CanCollide then
+                            if part:IsA("BasePart") then
                                 part.CanCollide = false
                             end
                         end
@@ -1255,10 +1262,37 @@ function astralix:gui()
     self.moduleExecute:register(
         "hop",
         function(args)
-            self.SendNotify:show("ASTRALIX", "Searching..", 3, "success")
-            task.wait(1)
+            self.SendNotify:show("ASTRALIX", "Searching for a server..", 3, "info")
             local TeleportService = game:GetService("TeleportService")
-            TeleportService:Teleport(game.PlaceId)
+            local HttpService = game:GetService("HttpService")
+            local servers = {}
+            local cursor = nil
+            repeat
+                local success, result = pcall(function()
+                    return HttpService:JSONDecode(game:HttpGet('https://games.roblox.com/v1/games/' .. game.PlaceId .. '/servers/Public?sortOrder=Asc&limit=100' .. (cursor and "&cursor=" .. cursor or "")))
+                end)
+                if success and result and result.data then
+                    for _, server in ipairs(result.data) do
+                        if server.playing < server.maxPlayers and server.id ~= game.JobId then
+                            table.insert(servers, server)
+                        end
+                    end
+                    cursor = result.nextPageCursor
+                else
+                    break
+                end
+            until #servers >= 5 or not cursor
+            
+            if #servers > 0 then
+                local randomServer = servers[math.random(1, #servers)]
+                self.SendNotify:show("ASTRALIX", "Server found! Joining..", 3, "success")
+                task.wait(1)
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id)
+            else
+                self.SendNotify:show("ASTRALIX", "No servers found, joining random..", 3, "warning")
+                task.wait(1)
+                TeleportService:Teleport(game.PlaceId)
+            end
         end
     )
 
