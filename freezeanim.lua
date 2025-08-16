@@ -1,8 +1,3 @@
---!strict
-
--- This script creates a GUI to toggle the character's movement, effectively "freezing" them in place.
--- It achieves this by anchoring the HumanoidRootPart, locking the character in its current position.
-
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
@@ -10,7 +5,6 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local env = getgenv()
 
--- Module for toggling between default and "freeze" modes.
 local FreezeModule = {
     name = "Freeze",
     gui = nil,
@@ -21,7 +15,7 @@ local FreezeModule = {
     isFreezeModeActive = false,
     
     characterConnection = nil,
-    originalAnimations = {}, -- Table to store the original animation IDs
+    originalAnimations = {},
     
     createElement = function(self, className, parent, properties)
         local element = Instance.new(className, parent)
